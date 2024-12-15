@@ -1,8 +1,7 @@
 import logging
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from routes.accounts_manager import accounts_route
-from routes.meetings_manager import meetings_route
+from routes.attendees_manager import attendees_route
 from models.tables import create
 from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
@@ -29,8 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(accounts_route)
-app.include_router(meetings_route)
+app.include_router(attendees_route)
 
 @app.on_event("startup")
 def probando():

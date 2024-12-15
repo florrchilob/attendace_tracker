@@ -20,61 +20,19 @@ def to_return(status_code, error=0, data={}):
         case 2:
             message = "Not full name"
         case 3: 
-            message = "Mispar ishi not valid"
-        case 4:
-            message = "Mail not valid"
-        case 4.1:
-            message = "Mail non-existent"
-        case 4.2:
-            message = "Mail or password do not match"
-        case 5:
-            message = "Date type not valid"
-        case 6:
-            message = "Since type not valid" 
-        case 7:
-            message = "Until type not valid" 
-        case 7.1:
-            message = "Until before since"
-        case 8:
-            message = "Amount of people not valid" 
+            message = "ID not valid"
         case 9:
             message = "No connection to database" 
         case 10:
             message = "Account does not exists"
-        case 11:
-            message = "Password type not valid"
-        case 12:
-            message = "Telephone not valid"
-        case 13:
-            message = "Telephone type not valid"
-        case 14: 
-            message = "Mail or mispar ishi already used"
         case 15:
             message = "No needed"
-        case 15.1:
-            message = "Mail sent again"
-        case 16:
-            message = "Token not valid"
-        case 16.1:
-            message = "Token expired"
-        case 17:
-            message = "Account not authorized"
-        case 17.1:
-            message = "Account to validate"
-        case 18:
-            message = "Account id not valid"
-        case 19:
-            message = "Account type not valid"
         case 99:
             message = "Database error"
         case 100: 
             message = "Error"
         case 101:
             message = "No valid"
-        case 102:
-            message = "Mail limit reached"
-        case 103:
-            message = "Key or value not right"
         case 104:
             message = "No matches to your search"
         case _:

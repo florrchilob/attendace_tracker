@@ -1,12 +1,16 @@
 from pydantic import BaseModel 
 from typing import Optional
 
-class atrendees(BaseModel):
+class Attendee(BaseModel):
     id: Optional[int] = None
-    mispar_hishi: Optional[int] = None
+    mispar_ishi: Optional[int] = None
+    tehudat_zehut: Optional[int] = None
     full_name: Optional[str] = None
     arrived: Optional[bool] = None
 
+    def create_straight(self, data):
+        self.mispar_ishi = data.get("mispar_ishi")
+        self.full_name = data.get("full_name") 
 
     # def update_amount(self, license):
     #     self.id = license.id,

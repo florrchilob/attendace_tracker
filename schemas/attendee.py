@@ -10,6 +10,7 @@ class Attendee(BaseModel):
 
     def create_straight(self, data):
         self.mispar_ishi = data.get("mispar_ishi")
+        self.tehudat_zehut = data.get("tehudat_zehut")
         self.full_name = data.get("full_name") 
 
     # def update_amount(self, license):

@@ -39,23 +39,28 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 def createattendees(sent: dict):
-    print(len(sent.get("attendees")))
     if "attendees" not in sent:
         return to_return(400, 101)
     attendees = sent.get("attendees")
     testing = False
     if "testing" in sent:
         testing = sent["testing"]
+    notValid = []
+    valid = []    
     for attendee in attendees:
         if not "mispar_ishi" in attendee and not "tehudat_zehut" in attendee:
-            return to_return(400, 3)
-        if "full_name" not in attendee:
-            return to_return(400, 1)
-        attendee = Attendee()
-        attendee.create_straight(sent)
-        validation = sends_validate(attendee, ["mispar_ishi", "name"])
+            notValid.append(attendee)
+        elif "full_name" not in attendee:
+            notValid.append(attendee)
+        validation = sends_validate(attendee, ["mispar_ishi", "name", "tehudat_zehut"])
+        if validation != True:
+            notValid.append(attendee)
+        else:
+            validAttende = Attendee()
+            validAttende.create_straight(attendee)
+            valid.append(validAttende)
     if validation == True:
-        response = logic_create_attendee(attendee, testing)
+        response = logic_create_attendee(valid, testing)
         if len(response) < 3:
             response = to_return(response[0], response[1]) 
         else:
@@ -64,8 +69,9 @@ def createattendees(sent: dict):
     return to_return(validation[0], validation[1])
 
 #Logic behind the create function
-def logic_create_attendee(attendee: Attendee, testing):
-    validation = db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi})
+def logic_create_attendee(validAttendees: list, testing):
+    for attendee in validAttendees:
+        validation = db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
     
     print(validation)
     return(200,0)

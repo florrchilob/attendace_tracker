@@ -29,7 +29,8 @@ def db_validating(to_validate, testing = None):
     #Type 1 = mispar ishi in DB
     if type_function == 1:
         try:
-            query = attendees.select().filter(attendees.c.mispar_ishi == to_validate.get("mispar_ishi"))
+            query = attendees.select().where(and_(attendees.c.mispar_ishi == to_validate.get("mispar_ishi"),
+                                                  attendees.c.tehudat_zehut == to_validate.get("tehudat_zehut")))
             response_db = session.execute(query).fetchall()
             if response_db == []:
                 return True

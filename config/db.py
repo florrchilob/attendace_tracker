@@ -13,7 +13,7 @@ password = "Aa123456123456"
 host = "localhost"
 secret_key="AA123456123456"
 port = 3306
-database_name = "calendar_meeting"
+database_name = "attendace_tracker"
 
 
 engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{database_name}")

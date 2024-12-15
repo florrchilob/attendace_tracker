@@ -1,14 +1,15 @@
 from pydantic import BaseModel 
 from typing import Optional
 
-class AdminAccountXLicense(BaseModel):
+class atrendees(BaseModel):
     id: Optional[int] = None
-    license_id: int
-    admin_account_id: int
-    amount_licenses: int
+    mispar_hishi: Optional[int] = None
+    full_name: Optional[str] = None
+    arrived: Optional[bool] = None
 
-    def update_amount(self, license):
-        self.id = license.id,
-        self.license_id = license.license_id
-        self.admin_account_id = license.admin_account_id
-        self.amount_licenses = license.amount_licenses-1
+
+    # def update_amount(self, license):
+    #     self.id = license.id,
+    #     self.license_id = license.license_id
+    #     self.admin_account_id = license.admin_account_id
+    #     self.amount_licenses = license.amount_licenses-1

@@ -39,67 +39,71 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 def createattendees(sent: dict):
+    print(sent)
     if "attendees" not in sent:
         return to_return(400, 101)
     attendees = sent.get("attendees")
+    if type(attendees) != list or attendees == []:
+        return to_return(400, 101)
     testing = False
     if "testing" in sent:
         testing = sent["testing"]
-    notValid = []
+    invalid = []
     valid = []    
     for attendee in attendees:
         if not "mispar_ishi" in attendee and not "tehudat_zehut" in attendee:
-            notValid.append(attendee)
+            invalid.append({"attendee": attendee, "error": to_return(400, 4, testing="no_json")})
         elif "full_name" not in attendee:
-            notValid.append(attendee)
-        validation = sends_validate(attendee, ["mispar_ishi", "name", "tehudat_zehut"])
-        if validation != True:
-            notValid.append(attendee)
+            invalid.append({"attendee": attendee, "error": to_return(400, 4, testing="no_json")})
         else:
-            validAttende = Attendee()
-            validAttende.create_straight(attendee)
-            valid.append(validAttende)
-    if validation == True:
-        response = logic_create_attendee(valid, testing)
-        if len(response) < 3:
-            response = to_return(response[0], response[1]) 
-        else:
-            response = to_return(response[0], response[1], response[2]) 
-        return response
-    return to_return(validation[0], validation[1])
+            validation = sends_validate(attendee, ["mispar_ishi", "name", "tehudat_zehut"])
+            if validation != True:
+                invalid.append(attendee)
+            else:
+                validAttende = Attendee()
+                validAttende.create_straight(attendee)
+                valid.append(validAttende)
+    response = logic_create_attendee(valid, invalid, testing)
+    if len(response) < 3:
+        return to_return(response[0], response[1]) 
+    else:
+        return to_return(response[0], response[1], response[2]) 
 
 #Logic behind the create function
-def logic_create_attendee(validAttendees: list, testing):
-    for attendee in validAttendees:
-        validation = db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
-    
-    print(validation)
-    return(200,0)
-    if testing != "update_account":
-        validation = db_validating({"type" : 1, "mail": account.mail, "mispar_ishi": account.mispar_ishi})
-        if validation == "error":
-            return (500, 99)
-        if validation == False:
-            return (400, 14)
-    token = token_generate()
-    account_complete = complete_account(account, token)
-    response_db = True
-    db_open_session()
-    if testing != "update_account":
-        response_db = db_saving(account_complete, sub_accounts, testing)
-    db_close_session()
-    if response_db == "error":
-        return (500, 99)
-    if response_db == False:
-        return (400, 99)
-    response_mail = send_mail({"mail": account.mail, "name": account.name, "type": 1, "token": token.token})
-    if response_mail == "error":
-        return (500, 102)
-    if response_mail == False:
-        return (400, 4.1) 
-    if testing == True:
-        return (201, 0, token.token)
-    if testing == "id":
-        payload = {"token": token.token, "id": response_db}
-        return (201, 0, payload)
-    return (201, 0)
+def logic_create_attendee(validAttendees: list, invalid: List, testing):
+    already_mispar_ishi = []
+    already_tehudat_zehut = []
+    added_mispar_ishi = []
+    added_tehudat_zehut = []
+    for this_attendee in validAttendees:
+        validation = db_validating({"type": 1, "mispar_ishi": this_attendee.mispar_ishi, "tehudat_zehut": this_attendee.tehudat_zehut})
+        if validation != True:
+            if this_attendee.mispar_ishi:
+                already_mispar_ishi.append(this_attendee.mispar_ishi)
+            else:
+                already_tehudat_zehut.append(this_attendee.tehudat_zehut)
+        else:
+            db_open_session()
+            response_db = db_saving(this_attendee, attendees, testing)
+            db_close_session() 
+            if response_db == "error":
+                return (500, 99)
+            else:
+                if this_attendee.mispar_ishi:
+                    added_mispar_ishi.append(this_attendee.mispar_ishi)
+                else:
+                    added_tehudat_zehut.append(this_attendee.tehudat_zehut)
+    returning = {
+        "misssing_data": invalid,
+        "already_database":{
+            "mispar_ishi": already_mispar_ishi,
+            "tehudat_zehut": already_tehudat_zehut
+        },
+        "successfull": {
+            "mispar_ishi": added_mispar_ishi,
+            "tehudat_zehut": added_tehudat_zehut
+        }
+    }
+    if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:
+        return (201, 0, returning)
+    return (400, 101, returning)

@@ -5,7 +5,7 @@ from config.db import meta, engine
 attendees = Table("attendees", meta,
                     Column("id", BigInteger, Identity(start=1, cycle=True), primary_key=True),
                     Column("mispar_ishi", Integer, unique=True),
-                    Column("tehudar_zehut", Integer, unique=True),
+                    Column("tehudat_zehut", Integer, unique=True),
                     Column("full_name", String(255)),
                     Column("arrived", Boolean)
                 )

@@ -26,7 +26,7 @@ def db_validating(to_validate, testing = None):
     global session
     if session is None:
         db_open_session()
-    #Type 1 = mispar ishi in DB
+    #Type 1 = mispar ishi or tehudat zehut in DB
     if type_function == 1:
         try:
             query = attendees.select().where(and_(attendees.c.mispar_ishi == to_validate.get("mispar_ishi"),
@@ -34,7 +34,7 @@ def db_validating(to_validate, testing = None):
             response_db = session.execute(query).fetchall()
             if response_db == []:
                 return True
-            return response_db.fetchall()
+            return response_db
         except:
             session.rollback()
             db_close_session()

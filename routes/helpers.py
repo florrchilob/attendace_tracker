@@ -13,14 +13,16 @@ import jwt
 import re
 
 #Returns the response in a valid way
-def to_return(status_code, error=0, data={}):
+def to_return(status_code, error=0, data={}, testing= None):
     match error:
         case 1:
             message = "Name not valid"
         case 2:
             message = "Not full name"
         case 3: 
-            message = "ID not valid"
+            message = "Mispar Ishi not valid"        
+        case 4: 
+            message = "Tehudat Zehut not valid"
         case 9:
             message = "No connection to database" 
         case 10:
@@ -56,9 +58,11 @@ def to_return(status_code, error=0, data={}):
             content = {"status": status, "data": data}
     else:
         if data == {}:
-            content = {"status" : status, "error" : error, "message" : message}
+            content = {"status" : status, "error_code" : error, "message" : message}
         else:
-            content = {"status" : status, "data": data, "error" : error, "message" : message}
+            content = {"status" : status, "data": data, "error_code" : error, "message" : message}
+    if testing == "no_json":
+        return {"status_code": status_code} | content
     return JSONResponse (status_code=status_code, content=content)
 
 #Formats all the data to unique standards
@@ -128,114 +132,18 @@ def validating(key, value, type_variable):
                     value = int(value)
                 except:
                     return (400, 3)
-            if value > 9223372036854775807:
+            if len(str(value)) < 5 or len(str(value)) > 7:
                 return (400, 3)
-        case "mail":
-            if type_variable != str:
-                return (400, 4)
+        case "tehudat_zehut":
             if value == None:
                 return (400, 4)
-            no_spaces = (value.strip()).split(" ")
-            if len(no_spaces) > 1 or type_variable != str or not ("@" in value) or value.count("@") > 1:
+            if type_variable == str:
+                try:
+                    value = int(value)
+                except:
+                    return (400, 4)
+            if len(str(value)) != 9:
                 return (400, 4)
-            if len(value)>254:
-                return(400, 4)
-            mail_pattern = re.compile(r'^[\w\.-]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$')
-            if not mail_pattern.match(value):
-                return(400, 4)
-        case "day":
-            if value == None:
-                return (400, 5)
-            if type_variable != str:
-                return (400, 5)
-            if "-" not in value:
-                (400, 5)
-        case "since":
-            if value == None:
-                return (400, 6)
-            if type_variable != str:
-                return (400, 5)
-            if ":" not in value:
-                (400, 5)
-        case "until":
-            if value == None:
-                return (400, 7)
-            if type_variable != str:
-                return (400, 5)
-            if ":" not in value:
-                (400, 5)
-        case "people_amount":
-            if value == None:
-                return (400, 8)
-            if type_variable != int or value not in [100, 200, 300, 500, 1000]:
-                return(400, 8)
-        case "password":
-            if value == None:
-                return (400, 11)
-            if value == '' or value == "":
-                return (400,11)
-            if type_variable != str:
-                return(400, 11)
-            hebrew_pattern = re.compile('[\u0590-\u05FF]+')
-            if bool(hebrew_pattern.search(value)):
-                return(400, 11)
-            if len(value)>254:
-                return(400, 11)
-            upper_case = bool(re.search(r'[A-Z]', value))
-            lower_case = bool(re.search(r'[a-z]', value))
-            numbers = bool(re.search(r'\d', value))
-            if not (upper_case and lower_case and numbers):
-                return(400, 11)
-            if ' ' in value:
-                return(400, 11)
-        case "telephone":
-            if value == None:
-                return (400, 12) 
-            if type_variable != int:
-                return (400, 13)
-            if value > 999999999:
-                return(400, 13)
-        case "token":
-            if value == None:
-                return key
-            if type_variable != value and type_variable != str:
-                return key
-            if value.strip() == '' or value.strip() == "":
-                return key
-        case "refresh_token":
-            if value == None:
-                return key
-            if type_variable != value and type_variable != str:
-                return key
-            if value.strip() == '' or value.strip() == "":
-                return key
-        case "token_expiration":
-            if value == None:
-                return key
-            if type_variable != datetime:
-                return key
-        case "JWT_token":
-            if value == None:
-                return (400, 16)
-            if type_variable != str:
-                return (400, 16)
-            try:
-                token_decoded = jwt.decode(value, routes.accounts_manager.secret_key, algorithms='HS256')
-                return token_decoded
-            except:
-                return (400, 16)
-        case "account_id":
-            if value == None:
-                return (400, 18)
-            if type_variable != int:
-                return (400, 18)
-        case "account_type":
-            if value == None:
-                return (400, 19)
-            if type_variable != int:
-                return (400, 19)
-            if value not in [0, 1, 2, 3]:
-                return (400, 19) 
         case "variable":
             if value == None: 
                 return (400, 103)  

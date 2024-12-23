@@ -1,365 +1,95 @@
 import pytest
-from fastapi.testclient import TestClient
-import app
-
-client = TestClient(app)
-
-@pytest.fixture
-def call_create_attendees_endpoint():
-    """
-    Fixture to call the create attendees endpoint with a payload.
-    This avoids repeating the same code to call the endpoint.
-    """
-    def _call_endpoint(payload):
-        response = client.post("/attendees/create", json=payload)
-        return response
-    return _call_endpoint
-
-def test_create_attendees_missing_attendees_key(call_create_attendees_endpoint):
-    # Test case where the 'attendees' key is missing from the payload.
-    response = call_create_attendees_endpoint({})
-    assert response.status_code == 400
-    assert response.json() == {"status": "BAD_REQUEST", "error_code": 101, "message": "No valid"}
-
-def test_create_attendees_attendees_not_a_list(call_create_attendees_endpoint):
-    # Test case where 'attendees' value is not a list.
-    response = call_create_attendees_endpoint({"attendees": "not a list"})
-    assert response.status_code == 400
-    assert response.json() == {"status": "BAD_REQUEST", "error_code": 101, "message": "No valid"}
-
-def test_create_attendees_empty_attendees_list(call_create_attendees_endpoint):
-    # Test case where 'attendees' list is empty.
-    response = call_create_attendees_endpoint({"attendees": []})
-    assert response.status_code == 400
-    assert response.json() == {"status": "BAD_REQUEST", "error_code": 101, "message": "No valid"}
-
-def test_create_attendees_missing_mispar_ishi_and_tehudat_zehut(call_create_attendees_endpoint):
-    # Test case where 'mispar_ishi' and 'tehudat_zehut' are missing in an attendee.
-    payload = {"attendees": [{"full_name": "Test Attendee"}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-            "misssing_data": [{"attendee": {"full_name": "Test Attendee"}, "error": {"status_code": 400}}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []},
-        },
-    }
+import requests
+import random
 
 
-def test_create_attendees_missing_full_name(call_create_attendees_endpoint):
-    # Test case where 'full_name' is missing in an attendee.
-    payload = {"attendees": [{"mispar_ishi": 1234567}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-            "misssing_data": [{"attendee": {"mispar_ishi": 1234567}, "error": {"status_code": 400}}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []},
-        },
-    }
+# Base URL for testing
+BASE_URL = "http://127.0.0.1:8000/attendees"
 
-def test_create_attendees_invalid_name(call_create_attendees_endpoint):
-    # Test case with an invalid 'name' format.
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": 1234, "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-             "misssing_data": [{"mispar_ishi": 1234567, "name": 1234, "tehudat_zehut": 123456789}],
-             "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-             "successfull": {"mispar_ishi": [], "tehudat_zehut": []}
-        }
-    }
+# Helper function to send POST requests
 
-def test_create_attendees_invalid_mispar_ishi_wrong_type(call_create_attendees_endpoint):
-    # Test case with an invalid 'mispar_ishi' format (wrong type).
-    payload = {"attendees": [{"mispar_ishi": "abc", "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-            "misssing_data": [{"mispar_ishi": "abc", "name": "John Doe", "tehudat_zehut": 123456789}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []},
-        }
-    }
-def test_create_attendees_invalid_mispar_ishi_short(call_create_attendees_endpoint):
-    # Test case with an invalid 'mispar_ishi' (short).
-    payload = {"attendees": [{"mispar_ishi": 1234, "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-            "misssing_data": [{"mispar_ishi": 1234, "name": "John Doe", "tehudat_zehut": 123456789}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []}
-        }
-    }
+random_mispar_ishi = random.randrange(10000, 9999999)
+random_tehudat_zehut = random.randrange(100000000, 999999999)
 
-def test_create_attendees_invalid_mispar_ishi_long(call_create_attendees_endpoint):
-    # Test case with an invalid 'mispar_ishi' (long).
-    payload = {"attendees": [{"mispar_ishi": 12345678, "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-        "data": {
-            "misssing_data": [{"mispar_ishi": 12345678, "name": "John Doe", "tehudat_zehut": 123456789}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []}
-        }
-    }
+def create_attendees(sent=None, testing=None):
+    if sent is None:
+        sent = {}
+    payload = {"attendees": sent.get("attendees", [])}
+    if testing:
+        payload["testing"] = testing
+    response = requests.post(BASE_URL + "/create", json=payload)
+    return response.status_code, response.json()
 
-def test_create_attendees_invalid_tehudat_zehut_wrong_type(call_create_attendees_endpoint):
-    # Test case with an invalid 'tehudat_zehut' format (wrong type).
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": "abc"}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-        "status": "BAD_REQUEST",
-        "error_code": 101,
-        "message": "No valid",
-         "data": {
-            "misssing_data": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": "abc"}],
-            "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-            "successfull": {"mispar_ishi": [], "tehudat_zehut": []}
-        }
-    }
+# Test cases
 
-def test_create_attendees_invalid_tehudat_zehut_short(call_create_attendees_endpoint):
-    # Test case with an invalid 'tehudat_zehut' (short).
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 12345678}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-            "status": "BAD_REQUEST",
-            "error_code": 101,
-            "message": "No valid",
-             "data": {
-                 "misssing_data": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 12345678}],
-                 "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-                "successfull": {"mispar_ishi": [], "tehudat_zehut": []},
-            },
-        }
+def test_create_attendees_missing_attendees():
+    status, data = create_attendees(sent={})
+    assert status == 400
+    assert data["error_code"] == 101
 
-def test_create_attendees_invalid_tehudat_zehut_long(call_create_attendees_endpoint):
-    # Test case with an invalid 'tehudat_zehut' (long).
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 1234567890}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-            "status": "BAD_REQUEST",
-            "error_code": 101,
-            "message": "No valid",
-             "data": {
-                "misssing_data": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 1234567890}],
-                 "already_database": {"mispar_ishi": [], "tehudat_zehut": []},
-                "successfull": {"mispar_ishi": [], "tehudat_zehut": []}
-            },
-        }
+def test_create_attendees_empty_attendees():
+    status, data = create_attendees(sent={"attendees": []})
+    assert status == 400
+    assert data["error_code"] == 101
 
-def test_create_attendees_already_in_database_mispar_ishi(call_create_attendees_endpoint,):
-    # Test case where an attendee with the same 'mispar_ishi' already exists in the database.
-    # Assuming you have a way to add an attendee directly to the DB to cause this conflict
-    payload = {"attendees": [{"mispar_ishi": 1111111, "name": "John Doe", "tehudat_zehut": 987654321}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-            "status": "BAD_REQUEST",
-            "error_code": 101,
-            "message": "No valid",
-            "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [1111111],
-                "tehudat_zehut": [],
-            },
-            "successfull": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-        }
-    }
+def test_create_attendees_invalid_attendee():
+    invalid_attendee = [{"mispar_ishi": 12345}]
+    status, data = create_attendees(sent={"attendees": invalid_attendee})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
+def test_create_attendees_valid_attendee():
+    global random_mispar_ishi, random_tehudat_zehut
+    valid_attendee = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": valid_attendee})
+    assert status == 201
+    assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
-def test_create_attendees_already_in_database_tehudat_zehut(call_create_attendees_endpoint):
-    # Test case where an attendee with the same 'tehudat_zehut' already exists in the database.
-    # Assuming you have a way to add an attendee directly to the DB to cause this conflict
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 111111111}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-            "status": "BAD_REQUEST",
-            "error_code": 101,
-            "message": "No valid",
-            "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [111111111],
-            },
-            "successfull": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-        },
-    }
+def test_create_attendees_duplicate_attendee():
+    duplicate_attendee = [{"mispar_ishi": 1234567, "tehudat_zehut": 123456789, "full_name": "John Doe"}]
+    create_attendees(sent={"attendees": duplicate_attendee})
+    status, data = create_attendees(sent={"attendees": duplicate_attendee})
+    assert status == 400
+    assert len(data["data"]["already_database"]["mispar_ishi"]) == 1
 
+def test_create_attendees_missing_name():
+    attendee_no_name = [{"mispar_ishi": 1234567, "tehudat_zehut": 123456789}]
+    status, data = create_attendees(sent={"attendees": attendee_no_name})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_ok_with_mispar_ishi(call_create_attendees_endpoint):
-    # Test case for creating a valid attendee with 'mispar_ishi'.
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "CREATED",
-        "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-            "successfull": {
-                "mispar_ishi": [1234567],
-                "tehudat_zehut": [],
-            },
-        },
-    }
+def test_create_attendees_invalid_name():
+    invalid_name = [{"mispar_ishi": 1234567, "tehudat_zehut": 123456789, "full_name": "J0hn D0e!"}]
+    status, data = create_attendees(sent={"attendees": invalid_name})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 1
 
-def test_create_attendees_ok_with_tehudat_zehut(call_create_attendees_endpoint):
-    # Test case for creating a valid attendee with 'tehudat_zehut'.
-    payload = {"attendees": [{"name": "Jane Doe", "tehudat_zehut": 987654321}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "CREATED",
-        "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-            "successfull": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [987654321],
-            },
-        },
-    }
+def test_create_attendees_invalid_mispar_ishi():
+    invalid_mispar_ishi = [{"mispar_ishi": 123, "tehudat_zehut": 123456789, "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
 
-def test_create_attendees_ok_multiple_attendees(call_create_attendees_endpoint):
-    # Test case for creating multiple valid attendees.
-    payload = {
-        "attendees": [
-            {"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 123456789},
-            {"name": "Jane Smith", "tehudat_zehut": 987654321},
-        ]
-    }
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "CREATED",
-        "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-             "successfull": {
-                "mispar_ishi": [1234567],
-                "tehudat_zehut": [987654321],
-            },
-        },
-    }
+def test_create_attendees_invalid_tehudat_zehut():
+    invalid_tehudat_zehut = [{"mispar_ishi": 1234567, "tehudat_zehut": 12345678, "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_mix_valid_and_invalid(call_create_attendees_endpoint):
-    # Test case for a mix of valid and invalid attendees.
-    payload = {
-        "attendees": [
-            {"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 123456789},  # Valid
-            {"name": "Jane Smith"},                                           # Missing 'mispar_ishi' and 'tehudat_zehut'
-            {"mispar_ishi": "abc", "name": "Invalid Name"},                             # Invalid 'mispar_ishi'
-        ]
-    }
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 400
-    assert response.json() == {
-            "status": "BAD_REQUEST",
-            "error_code": 101,
-            "message": "No valid",
-            "data": {
-            "misssing_data": [
-                {
-                    "attendee": {"name": "Jane Smith"},
-                     "error": {"status_code": 400}
-                },
-                {"mispar_ishi": "abc", "name": "Invalid Name"}],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": []
-            },
-            "successfull": {
-                "mispar_ishi": [1234567],
-                "tehudat_zehut": []
-            },
-        },
-    }
+def test_create_attendees_mixed_valid_and_invalid():
+    global random_mispar_ishi, random_tehudat_zehut
+    mixed_attendees = [
+        {"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"},
+        {"mispar_ishi": 123, "tehudat_zehut": 123456789, "full_name": "Invalid Mispar"}
+    ]
+    status, data = create_attendees(sent={"attendees": mixed_attendees})
+    assert status == 201
+    assert len(data["data"]["misssing_data"]) == 1
+    assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
-def test_create_attendees_with_testing_true(call_create_attendees_endpoint):
-    # Test case where 'testing' is True.
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "CREATED",
-        "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-            "successfull": {
-                "mispar_ishi": [1234567],
-                "tehudat_zehut": [],
-            },
-        },
-    }
-
-
-def test_create_attendees_with_testing_false(call_create_attendees_endpoint):
-    # Test case where 'testing' is False.
-    payload = {"attendees": [{"mispar_ishi": 1234567, "name": "John Doe", "tehudat_zehut": 123456789}]}
-    response = call_create_attendees_endpoint(payload)
-    assert response.status_code == 201
-    assert response.json() == {
-        "status": "CREATED",
-        "data": {
-            "misssing_data": [],
-            "already_database": {
-                "mispar_ishi": [],
-                "tehudat_zehut": [],
-            },
-            "successfull": {
-                "mispar_ishi": [1234567],
-                "tehudat_zehut": [],
-            },
-        },
-    }
+def test_create_attendees_large_input():
+    global random_mispar_ishi, random_tehudat_zehut
+    large_input = [{"mispar_ishi": random_mispar_ishi + i, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"} for i in range(100)]
+    status, data = create_attendees(sent={"attendees": large_input}, testing="Ok")
+    assert status == 201
+    assert len(data["data"]["successfull"]["mispar_ishi"]) == 100

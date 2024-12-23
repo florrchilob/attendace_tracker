@@ -197,3 +197,10 @@ def logic_attendee_arrived(attendee: Attendee, testing: str = None):
     if response != True:
         return (500, 9)
     return (200, 0)
+
+@attendees_route.put("/restartattendace")
+def restart_attendace():
+    response = db_updating({"type": 2})
+    if response == "error":
+        return to_return(500, 99)
+    return to_return(200, 0)

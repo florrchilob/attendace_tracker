@@ -6,7 +6,7 @@ import logging
 from typing import List
 from schemas.attendee import Attendee
 from routes.helpers import to_return, sends_validate, send_mail, token_validating
-from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session
+from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
 import pandas
@@ -39,7 +39,6 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 def createattendees(sent: dict):
-    print(sent)
     if "attendees" not in sent:
         return to_return(400, 101)
     attendees = sent.get("attendees")
@@ -49,16 +48,16 @@ def createattendees(sent: dict):
     if "testing" in sent:
         testing = sent["testing"]
     invalid = []
-    valid = []    
+    valid = []
     for attendee in attendees:
         if not "mispar_ishi" in attendee and not "tehudat_zehut" in attendee:
-            invalid.append({"attendee": attendee, "error": to_return(400, 4, testing="no_json")})
+            invalid.append({"attendee": attendee, "error": to_return(400, 102, testing="no_json")})
         elif "full_name" not in attendee:
             invalid.append({"attendee": attendee, "error": to_return(400, 4, testing="no_json")})
         else:
-            validation = sends_validate(attendee, ["mispar_ishi", "name", "tehudat_zehut"])
+            validation = sends_validate(attendee, attendee.keys())
             if validation != True:
-                invalid.append(attendee)
+                invalid.append({"attendee": attendee, "error": to_return(400, validation[1], testing="no_json")})
             else:
                 validAttende = Attendee()
                 validAttende.create_straight(attendee)
@@ -67,7 +66,7 @@ def createattendees(sent: dict):
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
-        return to_return(response[0], response[1], response[2]) 
+        return to_return(response[0], response[1], response[2])
 
 #Logic behind the create function
 def logic_create_attendee(validAttendees: list, invalid: List, testing):
@@ -78,10 +77,15 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
     for this_attendee in validAttendees:
         validation = db_validating({"type": 1, "mispar_ishi": this_attendee.mispar_ishi, "tehudat_zehut": this_attendee.tehudat_zehut})
         if validation != True:
-            if this_attendee.mispar_ishi:
+            if this_attendee.mispar_ishi and not this_attendee.tehudat_zehut:
                 already_mispar_ishi.append(this_attendee.mispar_ishi)
-            else:
+            elif not this_attendee.mispar_ishi and this_attendee.tehudat_zehut:
                 already_tehudat_zehut.append(this_attendee.tehudat_zehut)
+            else:
+                if validation.mispar_ishi == this_attendee.mispar_ishi:
+                    already_mispar_ishi.append(this_attendee.mispar_ishi)
+                else:
+                    already_tehudat_zehut.append(this_attendee.tehudat_zehut)
         else:
             db_open_session()
             response_db = db_saving(this_attendee, attendees, testing)
@@ -107,3 +111,89 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:
         return (201, 0, returning)
     return (400, 101, returning)
+
+@attendees_route.get("/getattendees")
+async def get_attendees():
+    response = db_getting({"type": 1, "table": attendees})
+    if response == "error":
+        return to_return(500, 99)
+    return to_return(200, 0, response)
+
+@attendees_route.put ("/edit")
+def edit_attendees(sent: dict):
+    if "id" not in sent:
+        return to_return(400, 102)
+    if "mispar_ishi" not in sent and "tehudat_zehut" not in sent and "full_name" not in sent and "arrived" not in sent:
+        return (400, 101)
+    testing = False
+    if "testing" in sent:
+        testing = sent["testing"]
+    keys = sent.keys()
+    validation = sends_validate(sent, keys)
+    if validation == True:
+        attendee = Attendee()
+        attendee.create_straight(sent)
+        response = logic_edit_attendee(attendee, testing)
+        return to_return(response[0], response[1]) 
+    return to_return(validation[0], validation[1])
+
+def logic_edit_attendee(attendee_to_edit, testing):
+    db_validation = db_validating({"type": 2, "id": attendee_to_edit.id})
+    if db_validation == "error":
+        return (500, 99)
+    if db_validation == False:
+        return (400, 101)
+    to_edit = attendee_to_edit.dict(exclude_none=True, exclude={"id"})
+    response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": attendee_to_edit.id}, "values": to_edit})
+    if response == "error":
+        return (500, 99)
+    if response != True:
+        return (500, 9)
+    return (200, 0)
+
+@attendees_route.delete("/deleteattendee/{id}")
+def delete_attendee(id: int, testing: str = None):
+    validation = sends_validate({"id": id}, ["id"])
+    if validation == True:
+        response = logic_delete_attendee(id, testing)
+        return to_return(response[0], response[1])
+    return to_return(validation[0], validation[1])
+
+def logic_delete_attendee(id: int, testing: dict):
+    db_validation = db_validating({"type": 2, "id": id})
+    if db_validation == "error":
+        return (500, 99)
+    if db_validation == False:
+        return (400, 102)
+    db_delete = db_deleting({"id": id, "table": attendees})
+    if db_delete == "error":
+        return (500, 99)
+    if db_delete != True:
+        return (500, 9)
+    return(200, 0)
+
+@attendees_route.put("/attendeearrived")
+def attendee_arrived(sent: dict, testing: str = None):
+    if "tehudat_zehut" not in sent and "mispar_ishi" not in sent:
+        return to_return(400, 101)
+    keys = sent.keys()
+    validation = sends_validate(sent, keys)
+    if validation == True:
+        attendee = Attendee()
+        attendee.create_straight(sent)
+        response = logic_attendee_arrived(attendee, testing)
+        return to_return(response[0], response[1])
+    return to_return(validation[0], validation[1])
+
+def logic_attendee_arrived(attendee: Attendee, testing: str = None):
+    db_validation = db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
+    if db_validation == "error":
+        return (500, 99)
+    if db_validation == True:
+        return (400, 104)
+    response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": db_validation.id}, "values": {"arrived": True}})
+    if response == "error":
+        return (500, 99)
+    if response != True:
+        return (500, 9)
+    return (200, 0)

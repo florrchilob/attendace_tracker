@@ -186,16 +186,14 @@ def db_updating(to_update):
         except:
             session.rollback()
             return "error"
-    # Type 2 = eliminates token from a user knowing the mail   
+    # Type 2 = restart attendace all attendees
     if to_update.get("type") == 2:
+        query = attendees.update().values(arrived = False)
         try:
-            query = table.update().where(table.c.mail == to_update.get("mail")).values(token = None)
             response = session.execute(query)
-            if response.rowcount == 1:
-                session.commit()
-                return True
+            return True
         except:
             session.rollback()
-            return False
+            return "error"
     return {"ok"}
     

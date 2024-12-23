@@ -3,8 +3,8 @@ from typing import Optional
 
 class Attendee(BaseModel):
     id: Optional[int] = None
-    mispar_ishi: Optional[int] = None
-    tehudat_zehut: Optional[int] = None
+    mispar_ishi: Optional[str] = None
+    tehudat_zehut: Optional[str] = None
     full_name: Optional[str] = None
     arrived: Optional[bool] = None
 

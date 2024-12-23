@@ -63,13 +63,7 @@ def to_return(status_code, error=0, data={}, testing= None):
     return JSONResponse (status_code=status_code, content=content)
 
 #Formats all the data to unique standards
-def to_standard(account, value, key):
-    if type(value) == int:
-        if value < 1 and value > 0:
-            value = int(str(value[1:]))
-            setattr(account, key, value)
-            return value
-    return value
+
 
 #Sends every value to validate
 def sends_validate(to_validate, values):
@@ -78,8 +72,6 @@ def sends_validate(to_validate, values):
     for key, value in to_validate:
         if key in values:
             validation = True
-            if value is not None:
-                value = to_standard(to_validate, value, key)
             validation = validating(key, value, type(value))
             if validation != True:
                 token = any(k == "token" for k, v in to_validate)
@@ -119,21 +111,17 @@ def validating(key, value, type_variable):
             if value == None:
                 return (400, 3)
             if type_variable == str:
-                try:
-                    value = int(value)
-                except:
+                if not int(value):
                     return (400, 3)
-            if len(str(value)) < 5 or len(str(value)) > 7:
+            if len(value) < 5 or len(str(value)) > 7:
                 return (400, 3)
         case "tehudat_zehut":
             if value == None:
                 return (400, 4)
             if type_variable == str:
-                try:
-                    value = int(value)
-                except:
+                if int(value):
                     return (400, 4)
-            if len(str(value)) != 9:
+            if len(value) != 9:
                 return (400, 4)
         case "variable":
             if value == None: 

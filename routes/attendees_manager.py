@@ -1,11 +1,9 @@
 #Imports
-from fastapi import APIRouter, status, Request, Header
-from datetime import datetime
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, status
 import logging
 from typing import List
 from schemas.attendee import Attendee
-from routes.helpers import to_return, sends_validate, send_mail, token_validating
+from routes.helpers import to_return, sends_validate
 from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
@@ -63,6 +61,7 @@ def createattendees(sent: dict):
                 validAttende.create_straight(attendee)
                 valid.append(validAttende)
     response = logic_create_attendee(valid, invalid, testing)
+    print(response)
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
@@ -88,7 +87,10 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
                     already_tehudat_zehut.append(this_attendee.tehudat_zehut)
         else:
             db_open_session()
-            response_db = db_saving(this_attendee, attendees, testing)
+            if testing == "Ok":
+                response_db = db_saving(this_attendee, attendees, testing)
+            else:
+                response_db == True
             db_close_session() 
             if response_db == "error":
                 return (500, 99)

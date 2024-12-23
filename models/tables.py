@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Identity, ForeignKey
+from sqlalchemy import Table, Column, Identity
 from sqlalchemy.sql.sqltypes import String, Boolean, BigInteger, Integer
 from config.db import meta, engine
 

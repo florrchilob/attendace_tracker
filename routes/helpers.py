@@ -35,6 +35,8 @@ def to_return(status_code, error=0, data={}, testing= None):
             message = "Error"
         case 101:
             message = "No valid"
+        case 102:
+            message = "ID not valid"
         case 104:
             message = "No matches to your search"
         case _:
@@ -81,7 +83,6 @@ def to_standard(account, value, key):
 
 #Sends every value to validate
 def sends_validate(to_validate, values):
-    since = None
     if type(to_validate) == dict:
         to_validate = to_validate.items()
     for key, value in to_validate:
@@ -90,11 +91,6 @@ def sends_validate(to_validate, values):
             if value is not None:
                 value = to_standard(to_validate, value, key)
             validation = validating(key, value, type(value))
-            if key == "since":
-                since = value
-            if key == "until":
-                if value < since:
-                    return (400, 4.1)
             if validation != True:
                 token = any(k == "token" for k, v in to_validate)
                 if key == "account_id" and token == True:
@@ -156,6 +152,14 @@ def validating(key, value, type_variable):
                 return (400, 103)
             if type_variable == str and len(value) < 3:
                 return (400, 103)
+        case "arrived":
+            if type_variable != bool:
+                return (400, 101)
+        case "id":
+            if type_variable != int:
+                return (400, 102)
+            if value < 0:
+                return (400, 102)
     return True
 
 #sends email to Account

@@ -29,17 +29,50 @@ def db_validating(to_validate, testing = None):
     #Type 1 = mispar ishi or tehudat zehut in DB
     if type_function == 1:
         try:
-            query = attendees.select().where(and_(attendees.c.mispar_ishi == to_validate.get("mispar_ishi"),
-                                                  attendees.c.tehudat_zehut == to_validate.get("tehudat_zehut")))
+            conditions = []
+            if to_validate.get("mispar_ishi") is not None:
+                conditions.append(attendees.c.mispar_ishi == to_validate["mispar_ishi"])
+            if to_validate.get("tehudat_zehut") is not None:
+                conditions.append(attendees.c.tehudat_zehut == to_validate["tehudat_zehut"])
+            query = attendees.select().where(or_(*conditions))
             response_db = session.execute(query).fetchall()
             if response_db == []:
                 return True
-            return response_db
+            return response_db[0]
         except:
             session.rollback()
             db_close_session()
             return "error"
-    
+    #Type 2 = id in database
+    if type_function == 2:
+        try:
+            query = attendees.select().where(attendees.c.id == to_validate.get("id"))
+            response_db = session.execute(query).fetchall()
+            if response_db == []:
+                return False
+            return True
+        except:
+            session.rollback()
+            db_close_session()
+            return "error"
+
+def db_deleting(to_delete):
+    global session
+    if session is None:
+        db_open_session()
+    id = to_delete.get("id")
+    table = to_delete.get("table")
+    try:
+        query = table.delete().where(table.c.id == id)
+        response = session.execute(query)
+        if response.rowcount >= 1:
+            session.commit()
+            return True
+        else:
+            return False
+    except: 
+        session.rollback()
+        return "error"
 
 def db_saving(to_save, table, testing = None):
     global session
@@ -69,7 +102,26 @@ def db_getting(to_get):
             table = to_get.get("table")
             query = table.select()
             response = session.execute(query).fetchall()
-            return response 
+            if response:
+                if hasattr(response[0], '_asdict'):
+                    return [row._asdict() for row in response]
+                else:
+                    # Access by column name (more robust)
+                    column_names = response[0].keys()  # Get column names from the first row
+                    result_list = []
+                    for row in response:
+                        row_dict = {}
+                        for column in column_names:
+                            row_dict[column] = getattr(row, column)
+                        result_list.append(row_dict)
+                    return result_list
+            else:
+                return []
+            if isinstance(response, list):
+                return [row.__dict__ for row in response] # Or row._asdict() if available
+            # If it's a single Row
+            else:
+                return response.__dict__ # Or result._asdict() if available
         except:
             return "error"
     

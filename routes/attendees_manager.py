@@ -61,6 +61,7 @@ def createattendees(sent: dict):
                 validAttende.create_straight(attendee)
                 valid.append(validAttende)
     response = logic_create_attendee(valid, invalid, testing)
+    print(response)
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
@@ -86,7 +87,7 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
                     already_tehudat_zehut.append(this_attendee.tehudat_zehut)
         else:
             db_open_session()
-            if testing != "Ok":
+            if testing != "Ok" and testing != "zeros":
                 response_db = db_saving(this_attendee, attendees, testing)
             else:
                 response_db = True

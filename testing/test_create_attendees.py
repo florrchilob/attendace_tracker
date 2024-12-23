@@ -15,6 +15,12 @@ def create_attendees(sent=None, testing=None):
     response = requests.post(BASE_URL + "/create", json=payload)
     return response.status_code, response.json()
 
+@pytest.fixture
+def random_data():
+    random_mispar_ishi = str(random.randrange(10000, 9999999))
+    random_tehudat_zehut = str(random.randrange(100000000, 999999999))
+    return random_mispar_ishi, random_tehudat_zehut
+
 # Test cases
 
 def test_create_attendees_missing_attendees():
@@ -33,9 +39,8 @@ def test_create_attendees_invalid_attendee():
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_valid_attendee():
-    random_mispar_ishi = str(random.randrange(10000, 9999999))
-    random_tehudat_zehut = str(random.randrange(100000000, 999999999))
+def test_create_attendees_valid_attendee(random_data):
+    random_mispar_ishi, random_tehudat_zehut = random_data
     valid_attendee = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": valid_attendee})
     assert status == 201
@@ -72,9 +77,8 @@ def test_create_attendees_invalid_tehudat_zehut():
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_mixed_valid_and_invalid():
-    random_mispar_ishi = str(random.randrange(10000, 9999999))
-    random_tehudat_zehut = str(random.randrange(100000000, 999999999))
+def test_create_attendees_mixed_valid_and_invalid(random_data):
+    random_mispar_ishi, random_tehudat_zehut = random_data
     mixed_attendees = [
         {"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"},
         {"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "Invalid Mispar"}
@@ -84,10 +88,9 @@ def test_create_attendees_mixed_valid_and_invalid():
     assert len(data["data"]["misssing_data"]) == 1
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
-def test_create_attendees_large_input():
-    random_mispar_ishi = str(random.randrange(10000, 9999999))
-    random_tehudat_zehut = str(random.randrange(100000000, 999999999))
-    large_input = [{"mispar_ishi": random_mispar_ishi + str(i), "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"} for i in range(100)]
+def test_create_attendees_large_input(random_data):
+    random_mispar_ishi, random_tehudat_zehut = random_data
+    large_input = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"} for i in range(100)]
     status, data = create_attendees(sent={"attendees": large_input}, testing="Ok")
     assert status == 201
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 100
@@ -101,9 +104,9 @@ def test_create_attendees_invalid_mispar_ishi_leading_zeros():
 
 def test_create_attendees_invalid_tehudat_zehut_leading_zeros():
     # tehudat_zehut is passed as a string to preserve the leading zeros
-    invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "00123456789", "full_name": "John Doe"}]
-    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
-    assert status == 400
+    invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "001234567", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut, testing:"zeros"})
+    assert status == 201
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_mispar_ishi_too_few_digits():
@@ -127,5 +130,54 @@ def test_create_attendees_invalid_mispar_ishi_too_many_digits():
 def test_create_attendees_invalid_tehudat_zehut_too_many_digits():
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789012", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+
+def test_create_attendees_invalid_mispar_ishi_leading_zeros():
+    # mispar_ishi is passed as a string to preserve the leading zeros
+    invalid_mispar_ishi = [{"mispar_ishi": "00123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+
+def test_create_attendees_invalid_tehudat_zehut_leading_zeros():
+    # tehudat_zehut is passed as a string to preserve the leading zeros
+    invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "00123456789", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+
+def test_create_attendees_invalid_mispar_ishi_too_few_digits():
+    # mispar_ishi has too few digits (3 digits)
+    invalid_mispar_ishi = [{"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+
+def test_create_attendees_invalid_tehudat_zehut_too_few_digits():
+    # tehudat_zehut has too few digits (8 digits)
+    invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "12345678", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+
+def test_create_attendees_invalid_mispar_ishi_too_many_digits():
+    # mispar_ishi has too many digits (10 digits)
+    invalid_mispar_ishi = [{"mispar_ishi": "1234567890", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+
+def test_create_attendees_invalid_tehudat_zehut_too_many_digits():
+    # tehudat_zehut has too many digits (12 digits)
+    invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789012", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
+    assert status == 400
+    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+
+def test_create_attendees_invalid_mispar_ishi_invalid_characters():
+    # mispar_ishi has invalid characters (alphabetical)
+    invalid_mispar_ishi = [{"mispar_ishi": "ABC123456", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4

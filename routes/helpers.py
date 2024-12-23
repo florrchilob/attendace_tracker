@@ -111,7 +111,7 @@ def validating(key, value, type_variable):
             if value == None:
                 return (400, 3)
             if type_variable == str:
-                if not int(value):
+                if not value.isdigit():
                     return (400, 3)
             if len(value) < 5 or len(str(value)) > 7:
                 return (400, 3)
@@ -119,7 +119,7 @@ def validating(key, value, type_variable):
             if value == None:
                 return (400, 4)
             if type_variable == str:
-                if int(value):
+                if not value.isdigit():
                     return (400, 4)
             if len(value) != 9:
                 return (400, 4)

@@ -1,0 +1,42 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "Meetings",
+    "dateExported": "2023-08-01T12:56:21.336Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "6e01bf32-17a5-4fa5-a4d0-0cdccd86f4e5",
+            "colId": "40f7d4b4-b303-4a1f-b6fb-9fc6a440a66f",
+            "containerId": "",
+            "name": "Save Meeting",
+            "url": "http://127.0.0.1:8000/meetings/save",
+            "method": "POST",
+            "sortNum": 30000,
+            "created": "2023-08-01T11:38:30.255Z",
+            "modified": "2023-08-01T11:38:30.255Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"Flor\",\n  \"mispar_ishi\": 346591563,\n  \"mail\": \"rotem10agmayev@gmail.com\",\n  \"day\": \"2023-07-19\",\n  \"since\": \"15:00:00\",\n  \"until\": \"19:00:00\",\n  \"people_amount\": 150\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "d53f80a7-07f9-41e8-9b13-daa551341640",
+            "colId": "40f7d4b4-b303-4a1f-b6fb-9fc6a440a66f",
+            "containerId": "",
+            "name": "Get all meetings",
+            "url": "http://127.0.0.1:8000/meetings",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2023-08-01T11:39:03.028Z",
+            "modified": "2023-08-01T11:39:03.028Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        }
+    ]
+}

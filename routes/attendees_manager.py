@@ -114,7 +114,7 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
         return (201, 0, returning)
     return (400, 101, returning)
 
-@attendees_route.get("/getattendees")
+@attendees_route.get("/get")
 async def get_attendees():
     response = db_getting({"type": 1, "table": attendees})
     if response == "error":
@@ -153,7 +153,7 @@ def logic_edit_attendee(attendee_to_edit, testing):
         return (500, 9)
     return (200, 0)
 
-@attendees_route.delete("/deleteattendee/{id}")
+@attendees_route.delete("/delete/{id}")
 def delete_attendee(id: int, testing: str = None):
     validation = sends_validate({"id": id}, ["id"])
     if validation == True:
@@ -174,7 +174,7 @@ def logic_delete_attendee(id: int, testing: dict):
         return (500, 9)
     return(200, 0)
 
-@attendees_route.put("/attendeearrived")
+@attendees_route.put("/arrived")
 def attendee_arrived(sent: dict, testing: str = None):
     if "tehudat_zehut" not in sent and "mispar_ishi" not in sent:
         return to_return(400, 101)
@@ -200,7 +200,7 @@ def logic_attendee_arrived(attendee: Attendee, testing: str = None):
         return (500, 9)
     return (200, 0)
 
-@attendees_route.put("/restartattendace")
+@attendees_route.put("/restart")
 def restart_attendace():
     response = db_updating({"type": 2})
     if response == "error":

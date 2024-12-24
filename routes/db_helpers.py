@@ -117,11 +117,6 @@ def db_getting(to_get):
                     return result_list
             else:
                 return []
-            if isinstance(response, list):
-                return [row.__dict__ for row in response] # Or row._asdict() if available
-            # If it's a single Row
-            else:
-                return response.__dict__ # Or result._asdict() if available
         except:
             return "error"
     

@@ -2,38 +2,12 @@ import pytest
 import requests
 import random
 import string
+from testing.test_create_attendees import create_get_id_attendee
+
+# Add mock for testing database error
 
 # Base URL for testing
 BASE_URL = "http://127.0.0.1:8000/attendees"
-
-def create_get_id_attendee():
-    # Make random attendee
-    random_mispar_ishi = str(random.randrange(10000, 9999999))
-    random_tehudat_zehut = str(random.randrange(100000000, 999999999))
-    random_name = ""
-    for i in range(random.randrange(99)):
-        random_name = random_name + random.choice(string.ascii_lowercase)
-    random_name = random_name + " "
-    for i in range(random.randrange(99)):
-        random_name = random_name + random.choice(string.ascii_lowercase)
-    valid_attendee = {"attendees":[{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": random_name}]}
-    # Create attendee
-    response = requests.post(BASE_URL + "/create", json=valid_attendee)
-    status = response.status_code
-    data = response.json()
-    assert status == 201
-    assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
-    # Get id attendee
-    response = requests.get(BASE_URL + "/getattendees")
-    assert response.status_code == 200
-    data = response.json()["data"]
-    id_to_edit = None
-    for attendee in data:
-        if attendee["full_name"].lower() == random_name:
-            id_to_edit = attendee["id"]
-            break
-    assert id_to_edit is not None
-    return id_to_edit
 
 # Helper function to send PUT requests for editing attendees
 def edit_attendees(sent=None):

@@ -126,7 +126,7 @@ def edit_attendees(sent: dict):
     if "id" not in sent:
         return to_return(400, 102)
     if "mispar_ishi" not in sent and "tehudat_zehut" not in sent and "full_name" not in sent and "arrived" not in sent:
-        return (400, 101)
+        return to_return(400, 101)
     testing = False
     if "testing" in sent:
         testing = sent["testing"]

@@ -16,7 +16,7 @@ def create_attendees(sent=None, testing=None):
     return response.status_code, response.json()
 
 @pytest.fixture
-def random_data():
+def random_data_create():
     random_mispar_ishi = str(random.randrange(10000, 9999999))
     random_tehudat_zehut = str(random.randrange(100000000, 999999999))
     return random_mispar_ishi, random_tehudat_zehut
@@ -39,12 +39,6 @@ def test_create_attendees_invalid_attendee():
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_valid_attendee(random_data):
-    random_mispar_ishi, random_tehudat_zehut = random_data
-    valid_attendee = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
-    status, data = create_attendees(sent={"attendees": valid_attendee})
-    assert status == 201
-    assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
 def test_create_attendees_duplicate_attendee():
     duplicate_attendee = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
@@ -77,8 +71,8 @@ def test_create_attendees_invalid_tehudat_zehut():
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
 
-def test_create_attendees_mixed_valid_and_invalid(random_data):
-    random_mispar_ishi, random_tehudat_zehut = random_data
+def test_create_attendees_mixed_valid_and_invalid(random_data_create):
+    random_mispar_ishi, random_tehudat_zehut = random_data_create
     mixed_attendees = [
         {"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"},
         {"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "Invalid Mispar"}
@@ -88,15 +82,15 @@ def test_create_attendees_mixed_valid_and_invalid(random_data):
     assert len(data["data"]["misssing_data"]) == 1
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
-def test_create_attendees_large_input(random_data):
-    random_mispar_ishi, random_tehudat_zehut = random_data
+def test_create_attendees_large_input(random_data_create):
+    random_mispar_ishi, random_tehudat_zehut = random_data_create
     large_input = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"} for i in range(100)]
     status, data = create_attendees(sent={"attendees": large_input}, testing="Ok")
     assert status == 201
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 100
 
-def test_create_attendees_invalid_mispar_ishi_leading_zeros(random_data):
-    random_mispar_ishi, random_tehudat_zehut = random_data
+def test_create_attendees_invalid_mispar_ishi_leading_zeros(random_data_create):
+    random_mispar_ishi, random_tehudat_zehut = random_data_create
     invalid_mispar_ishi = [{"mispar_ishi": "00123", "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
@@ -168,3 +162,10 @@ def test_create_attendees_invalid_mispar_ishi_invalid_characters():
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
     assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+
+def test_create_attendees_valid_attendee(random_data_create):
+    random_mispar_ishi, random_tehudat_zehut = random_data_create   
+    valid_attendee = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
+    status, data = create_attendees(sent={"attendees": valid_attendee})
+    assert status == 201
+    assert len(data["data"]["successfull"]["mispar_ishi"]) == 1

@@ -7,6 +7,7 @@ from routes.helpers import to_return, sends_validate
 from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
+from datetime import datetime
 import pandas
 import json
 import jwt
@@ -58,10 +59,11 @@ def createattendees(sent: dict):
                 invalid.append({"attendee": attendee, "error": to_return(400, validation[1], testing="no_json")})
             else:
                 validAttende = Attendee()
+                if "date_arrived" in attendee:
+                    attendee["date_arrived"] = datetime.strptime(attendee["date_arrived"], "%Y-%m-%d %H:%M:%S")
                 validAttende.create_straight(attendee)
                 valid.append(validAttende)
     response = logic_create_attendee(valid, invalid, testing)
-    print(response)
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
@@ -134,19 +136,33 @@ def edit_attendees(sent: dict):
     validation = sends_validate(sent, keys)
     if validation == True:
         attendee = Attendee()
+        if "date_arrived" in sent:
+            sent["date_arrived"] = datetime.strptime(sent["date_arrived"], "%Y-%m-%d %H:%M:%S")
         attendee.create_straight(sent)
         response = logic_edit_attendee(attendee, testing)
         return to_return(response[0], response[1]) 
     return to_return(validation[0], validation[1])
 
 def logic_edit_attendee(attendee_to_edit, testing):
-    db_validation = db_validating({"type": 2, "id": attendee_to_edit.id})
+    db_validation = db_validating({"type": 3, "id": attendee_to_edit.id})
     if db_validation == "error":
         return (500, 99)
     if db_validation == False:
         return (400, 101)
+    if type(db_validation) != bool:
+        if attendee_to_edit.mispar_ishi:
+            db_validation = db_validating({"type": 1, "mispar_ishi": attendee_to_edit.mispar_ishi}) 
+            if db_validation != True and db_validation.id != attendee_to_edit.id:
+                return (400, 3)
+        if attendee_to_edit.tehudat_zehut:
+            db_validation = db_validating({"type": 1, "tehudat_zehut": attendee_to_edit.tehudat_zehut})
+            if db_validation != True and db_validation.id != attendee_to_edit.id:
+                return (400, 4)
     to_edit = attendee_to_edit.dict(exclude_none=True, exclude={"id"})
+    if "date_arrived" in to_edit:
+        to_edit["date_arrived"] = datetime.strftime(to_edit["date_arrived"], "%Y-%m-%d %H:%M:%S")
     response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": attendee_to_edit.id}, "values": to_edit})
+    print(response)
     if response == "error":
         return (500, 99)
     if response != True:

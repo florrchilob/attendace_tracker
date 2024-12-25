@@ -24,7 +24,7 @@ def create_get_id_attendee(mispar_ishi_sent = None, tehudat_zehut = None):
     random_name = random_name + " "
     for i in range(random.randrange(99)):
         random_name = random_name + random.choice(string.ascii_lowercase)
-    valid_attendee = {"attendees":[{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": random_name}]}
+    valid_attendee = {"attendees":[{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": random_name, "date_arrived": "2023-12-22 15:30:45"}]}
     # Create attendee
     response = requests.post(BASE_URL + "/create", json=valid_attendee)
     status = response.status_code

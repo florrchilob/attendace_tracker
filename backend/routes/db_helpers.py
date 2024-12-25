@@ -43,14 +43,18 @@ def db_validating(to_validate, testing = None):
             session.rollback()
             db_close_session()
             return "error"
-    #Type 2 = id in database
-    if type_function == 2:
+    #Type 2 = id in database return true if exists
+    #Type 3 = id in database return attendee
+
+    if type_function == 2 or type_function == 3:
         try:
             query = attendees.select().where(attendees.c.id == to_validate.get("id"))
             response_db = session.execute(query).fetchall()
             if response_db == []:
                 return False
-            return True
+            if type_function == 2:
+                return True
+            return response_db[0]
         except:
             session.rollback()
             db_close_session()
@@ -98,25 +102,26 @@ def db_getting(to_get):
     if session is None:
         db_open_session()
     if type == 1:
+        from datetime import datetime
+
         try:
             table = to_get.get("table")
             query = table.select()
             response = session.execute(query).fetchall()
+            result_list = []
             if response:
-                if hasattr(response[0], '_asdict'):
-                    return [row._asdict() for row in response]
-                else:
-                    # Access by column name (more robust)
-                    column_names = response[0].keys()  # Get column names from the first row
-                    result_list = []
-                    for row in response:
-                        row_dict = {}
-                        for column in column_names:
-                            row_dict[column] = getattr(row, column)
-                        result_list.append(row_dict)
-                    return result_list
-            else:
-                return []
+                for row in response:
+                    if hasattr(row, "_asdict"):
+                        row_dict = row._asdict() 
+                    else:
+                        column_names = row.keys()
+                        row_dict = {column: getattr(row, column) for column in column_names}
+                    for key, value in row_dict.items():
+                        if isinstance(value, datetime): 
+                            row_dict[key] = value.isoformat()
+                    result_list.append(row_dict)
+
+            return result_list
         except:
             return "error"
     
@@ -171,9 +176,9 @@ def db_updating(to_update):
                 else:
                     conditions.append(column == value)
         values = to_update.get("values")
+        query = table.update().where(and_(*conditions)).values(**values)
+        response = session.execute(query)
         try:
-            query = table.update().where(and_(*conditions)).values(**values)
-            response = session.execute(query)
             if response.rowcount >= 1:
                 session.commit()
                 return True

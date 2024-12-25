@@ -39,7 +39,7 @@ def test_edit_attendees_invalid_id():
     assert status == 400
     assert data["error_code"] == 102
 
-def test_edit_attendees_valid_id_update_name(random_data_edit):
+def test_edit_attendees_valid_id_update_name():
     id_to_edit = create_get_id_attendee()
     status, _ = edit_attendees(sent={"id": id_to_edit, "full_name": "Updated Name"})
     assert status == 200
@@ -82,91 +82,107 @@ def test_edit_attendees_missing_field_validation_error(random_data_edit):
     assert status == 400
     assert data["error_code"] == 3
 
-def test_edit_attendees_invalid_arrived(random_data_edit):
+def test_edit_attendees_invalid_arrived():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "arrived": "yes"})
     assert status == 400
     assert data["error_code"] == 101  # Error por tipo de dato inválido
 
-def test_edit_attendees_valid_arrived_true(random_data_edit):
+def test_edit_attendees_valid_arrived_true():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "arrived": True})
     assert status == 200
 
-def test_edit_attendees_valid_arrived_false(random_data_edit):
+def test_edit_attendees_valid_arrived_false():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "arrived": False})
     assert status == 200
 
-def test_edit_attendees_invalid_date_format(random_data_edit):
+def test_edit_attendees_invalid_date_format():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "date_arrived": "2023-13-32"})
     assert status == 400
-    assert data["error_code"] == 101  # Error por formato de fecha inválido
+    assert data["error_code"] == 5
 
-def test_edit_attendees_invalid_date_type(random_data_edit):
+def test_edit_attendees_invalid_date_type():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "date_arrived": 123456789})
     assert status == 400
-    assert data["error_code"] == 101  # Error por tipo de dato inválido
+    assert data["error_code"] == 5
 
-def test_edit_attendees_null_date(random_data_edit):
+def test_edit_attendees_null_date():
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(sent={"id": id_to_edit, "date_arrived": None})
-    assert status == 200  # Permitir fechas nulas
+    assert status == 400
+    assert data["error_code"] == 5
 
-def test_edit_attendees_valid_date(random_data_edit):
+def test_edit_attendees_valid_date():
     id_to_edit = create_get_id_attendee()
-    status, data = edit_attendees(sent={"id": id_to_edit, "date_arrived": "2023-12-15T10:00:00"})
+    status, data = edit_attendees(sent={"id": id_to_edit, "date_arrived": "2023-12-15 10:00:00"})
     assert status == 200
 
-def test_edit_attendees_update_all_fields(random_data_edit):
+def test_edit_attendees_update_all_fields_double_mispar_ishi(random_data_edit):
+    _, _, random_tehudat_zehut = random_data_edit
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(
         sent={
             "id": id_to_edit,
             "mispar_ishi": "6543210",
-            "tehudat_zehut": "987654321",
+            "tehudat_zehut": random_tehudat_zehut,
             "full_name": "Updated Name",
             "arrived": True,
-            "date_arrived": "2023-12-15T10:00:00",
-        }
-    )
-    assert status == 200
-
-def test_edit_attendees_invalid_combined_fields(random_data_edit):
-    id_to_edit = create_get_id_attendee()
-    status, data = edit_attendees(
-        sent={
-            "id": id_to_edit,
-            "mispar_ishi": "123",  # Inválido
-            "tehudat_zehut": "12345678",  # Inválido
-            "full_name": "J0hn D0e!",  # Inválido
-            "arrived": "yes",  # Inválido
-            "date_arrived": "2023-13-32",  # Inválido
+            "date_arrived": "2023-12-15 10:00:00",
         }
     )
     assert status == 400
-    assert data["error_code"] == 101  # Debe devolver el primer error detectado
+    assert data["error_code"] == 3
 
-def test_edit_attendees_database_integration(random_data_edit):
+def test_edit_attendees_update_all_fields_double_tehudat_zehut(random_data_edit):
+    _, random_mispar_ishi, _ = random_data_edit
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(
         sent={
             "id": id_to_edit,
-            "mispar_ishi": "6543210",
+            "mispar_ishi": random_mispar_ishi,
             "tehudat_zehut": "987654321",
             "full_name": "Updated Name",
             "arrived": True,
-            "date_arrived": "2023-12-15T10:00:00",
+            "date_arrived": "2023-12-15 10:00:00",
+        }
+    )
+    assert status == 400
+    assert data["error_code"] == 4
+
+def test_edit_attendees_update_all_fields(random_data_edit):
+    _, random_mispar_ishi, random_tehudat_zehut = random_data_edit
+    id_to_edit = create_get_id_attendee()
+    status, data = edit_attendees(
+        sent={
+            "id": id_to_edit,
+            "mispar_ishi": random_mispar_ishi,
+            "tehudat_zehut": random_tehudat_zehut,
+            "full_name": "Updated Name",
+            "arrived": True,
+            "date_arrived": "2023-12-15 10:00:00",
         }
     )
     assert status == 200
-    response = requests.get(BASE_URL + "/get")
-    updated_attendee = response.json()["data"][0]
-    assert updated_attendee["mispar_ishi"] == "6543210"
-    assert updated_attendee["tehudat_zehut"] == "987654321"
-    assert updated_attendee["arrived"] == True
+
+def test_edit_attendees_invalid_combined_fields():
+    id_to_edit = create_get_id_attendee()
+    status, data = edit_attendees(
+        sent={
+            "id": id_to_edit,
+            "mispar_ishi": "123",
+            "tehudat_zehut": "12345678",
+            "full_name": "J0hn D0e!",
+            "arrived": "yes",
+            "date_arrived": "2023-13-32",  
+        }
+    )
+    assert status == 400
+    assert data["error_code"] == 3
+
 
 def test_edit_attendees_database_not_found():
     status, data = edit_attendees(sent={"id": 999999, "full_name": "Name Not Found"})

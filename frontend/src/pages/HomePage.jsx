@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-function HomePage() {
-  const [inputValue, setInputValue] = useState(""); // Para el input
-  const [selectedOption, setSelectedOption] = useState("misparIishi"); // Default: Mispar Iishi
+const HomePage = () => {
+  const [inputValue, setInputValue] = useState("");
+  const [selectedOption, setSelectedOption] = useState("misparIishi");
 
   const handleSubmit = () => {
     if (!inputValue.trim()) {
@@ -10,8 +10,7 @@ function HomePage() {
       return;
     }
 
-    // Simula una llamada al backend
-    const response = { status: "ok" }; // Simulación de respuesta del backend
+    const response = { status: "ok" };
 
     if (response.status === "ok") {
       alert("Número guardado correctamente.");
@@ -26,63 +25,47 @@ function HomePage() {
   };
 
   return (
-  <div dir="rtl" className="bg-bg-desktop bg-cover bg-center h-screen w-screen"  >
-    <h1>dfdsfgdfgברוך הבא</h1>
-      <div>
-        {/* Input */}
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="הכנס מספר זהות"
-          style={{
-            padding: "10px",
-            margin: "20px",
-            textAlign: "right",
-            direction: "rtl",
-            fontSize: "16px",
-          }}
-        />
-        {/* Switch */}
-        <div style={{ marginBottom: "20px" }}>
-          <label>
+    <div className="bg-bg-desktop bg-cover bg-center h-screen w-screen flex items-center justify-center">
+      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-8 text-center w-4/5 md:w-2/3 lg:w-1/2">
+        <h1 className="text-4xl font-bold text-white mb-8">ברוך הבא!</h1>
+        <div className="flex flex-wrap justify-between items-center mb-8">
+          <div className="w-1/3">
+            <div className="bg-black rounded-lg h-48 w-full flex items-center justify-center">
+              <span className="text-white">gif scanning card</span>
+            </div>
+          </div>
+          <div className="w-1/3 text-center">
+            <select
+              className="w-full mb-4 p-2 bg-gray-700 text-white rounded-lg"
+              value={selectedOption}
+              onChange={(e) => setSelectedOption(e.target.value)}
+            >
+              <option value="misparIishi">מספר אישי</option>
+              <option value="tehudatZehut">תעודת זהות</option>
+            </select>
             <input
-              type="radio"
-              name="type"
-              value="tehudatZehut"
-              onChange={() => setSelectedOption("tehudatZehut")}
+              type="text"
+              className="w-full p-2 bg-gray-700 text-white rounded-lg mb-4"
+              placeholder="הכנס מספר"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
             />
-            תעודת זהות
-          </label>
-          <label style={{ marginLeft: "20px" }}>
-            <input
-              type="radio"
-              name="type"
-              value="misparIishi"
-              onChange={() => setSelectedOption("misparIishi")}
-              defaultChecked
-            />
-            מספר אישי
-          </label>
+            <button
+              onClick={handleSubmit}
+              className="w-full p-2 bg-limeConvined text-white rounded-lg font-bold hover:bg-lime-700 transition"
+            >
+              שלח
+            </button>
+          </div>
+          <div className="w-1/3">
+            <div className="bg-black rounded-lg h-48 w-full flex items-center justify-center">
+              <span className="text-white">gif writing number</span>
+            </div>
+          </div>
         </div>
-        {/* Botón */}
-        <button
-          onClick={handleSubmit}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-            fontSize: "16px",
-          }}
-        >
-          שלח
-        </button>
       </div>
     </div>
   );
-}
+};
 
 export default HomePage;

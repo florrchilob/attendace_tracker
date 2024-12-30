@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import TypingGif from '../assets/gifs/Typing.gif'
 
 const HomePage = () => {
   const [inputValue, setInputValue] = useState("");
@@ -25,13 +26,18 @@ const HomePage = () => {
   };
 
   return (
-    <div className="bg-bg-desktop bg-cover bg-center h-screen w-screen flex items-center justify-center">
-      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-8 text-center w-4/5 md:w-2/3 lg:w-1/2">
-        <h1 className="text-4xl font-bold text-white mb-8">ברוך הבא!</h1>
-        <div className="flex flex-wrap justify-between items-center mb-8">
-          <div className="w-1/3">
-            <div className="bg-black rounded-lg h-48 w-full flex items-center justify-center">
-              <span className="text-white">gif scanning card</span>
+    <div
+      dir="rtl"
+      className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
+    >      
+    <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10 h-full px-auto">
+      <h1 className="text-4xl font-bold text-white mb-8 text-center">איזה כיף שמישהבו הגיע!</h1>
+        <div className="flex justify-between items-center mb-8 py-auto my-auto align-middle">
+          <div className="w-1/3 flex align-center">
+            <div className="bg-transparent rounded-lg h-48 w-full flex items-center justify-center">
+              <span className="text-white">
+                <img className="flex my-auto mx-auto align-center" src={TypingGif} alt="Barcode Scanner" />
+              </span>
             </div>
           </div>
           <div className="w-1/3 text-center">
@@ -58,7 +64,7 @@ const HomePage = () => {
             </button>
           </div>
           <div className="w-1/3">
-            <div className="bg-black rounded-lg h-48 w-full flex items-center justify-center">
+            <div className="bg-transparent rounded-lg h-48 w-full flex items-center justify-center">
               <span className="text-white">gif writing number</span>
             </div>
           </div>

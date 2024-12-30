@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import AddLogo from "../Logos/AddLogo";
-import GarbageLogo from "../Logos/GarbageLogo";
-import EditLogo from "../Logos/EditLogo.Jsx";
+import AddLogo from "../assets/Logos/AddLogo";
+import GarbageLogo from "../assets/Logos/GarbageLogo";
+import EditLogo from "../assets/Logos/EditLogo.Jsx";
 
 const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([

@@ -29,7 +29,7 @@ const HomePage = () => {
     }
   }
 
-  const handleSubmit = () => {
+  const  handleSubmit = async() => {
     if (selectedOption == "misparIshi" && inputValue.length < 6 || selectedOption == "tehudatZehut" && inputValue.length != 9) {
       Swal.fire({
         position: "center",
@@ -47,40 +47,48 @@ const HomePage = () => {
       }
     }
     else{
-      // llamar a api
-      let response = {"status": 200}
-      if (response.status == 200){
-        const now = new Date()
-        const hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const formattedTime = hours+":"+minutes
-        Swal.fire({
-          position: "center",
-          icon: "success",
-          title: "הגעתך נרשמה בהצלחה ב-" + formattedTime,
-          showConfirmButton: false,
-          timer: 2500,
-          customClass: {
-            popup: "custom-popup",
-            title: "custom-title-success",
-          },
-        }).then(()=> {
-          setInputValue("")
-          setSelectedOption("misparIshi")
-          setTimeout(() => {
-            console.log("Currently focused element:", document.activeElement);
-            if (inputRef.current) {
-              inputRef.current.focus();
-              console.log("Input focused:", inputRef.current === document.activeElement);
-            }
-          }, 100);
-        })
-      }
+      const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
+      let attendee = {[formattedOption]: inputValue.toString()}
+      let response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
+        method:'PUT',
+                headers: {
+                    'Access-Control-Allow-Origin': 'http://localhost:5173',
+                    'Content-Type': 'application/json', 
+                },
+                body: JSON.stringify(attendee)
+
+      })
+      // console.log(response)
+      // if (response.status == 200){
+      //   const now = new Date()
+      //   const hours = now.getHours();
+      //   const minutes = now.getMinutes().toString().padStart(2, '0');
+      //   const formattedTime = hours+":"+minutes
+      //   Swal.fire({
+      //     position: "center",
+      //     icon: "success",
+      //     title: "הגעתך נרשמה בהצלחה ב-" + formattedTime,
+      //     showConfirmButton: false,
+      //     timer: 2500,
+      //     customClass: {
+      //       popup: "custom-popup",
+      //       title: "custom-title-success",
+      //     },
+      //   }).then(()=> {
+      //     setInputValue("")
+      //     setSelectedOption("misparIshi")
+      //     setTimeout(() => {
+      //       if (inputRef.current) {
+      //         inputRef.current.focus();
+      //       }
+      //     }, 100);
+      //   })
+      // }
     }
   };
 
   const onChangeSelect = (e) => {
-    if (e.target.value == "misparIshi" && inputValue > 11 || e.target.value == "tehudatZehut" && inputValue > 9){
+    if (e.target.value == "misparIshi" && inputValue.length > 11 || e.target.value == "tehudatZehut" && inputValue.length > 9){
       setInputValue("")
     }
     setSelectedOption(e.target.value)
@@ -95,6 +103,21 @@ const HomePage = () => {
     }
   }, []);
   
+  useEffect(() => {
+    const handleFocusChange = () => {
+      inputRef.current.focus();
+    };
+  
+    window.addEventListener("focus", handleFocusChange, true);
+    window.addEventListener("blur", handleFocusChange, true);
+  
+    return () => {
+      window.removeEventListener("focus", handleFocusChange, true);
+      window.removeEventListener("blur", handleFocusChange, true);
+    };
+  }, []);
+  
+
   return (
     <div
       dir="rtl"

@@ -58,32 +58,102 @@ const HomePage = () => {
                 body: JSON.stringify(attendee)
 
       })
-      // console.log(response)
-      // if (response.status == 200){
-      //   const now = new Date()
-      //   const hours = now.getHours();
-      //   const minutes = now.getMinutes().toString().padStart(2, '0');
-      //   const formattedTime = hours+":"+minutes
-      //   Swal.fire({
-      //     position: "center",
-      //     icon: "success",
-      //     title: "הגעתך נרשמה בהצלחה ב-" + formattedTime,
-      //     showConfirmButton: false,
-      //     timer: 2500,
-      //     customClass: {
-      //       popup: "custom-popup",
-      //       title: "custom-title-success",
-      //     },
-      //   }).then(()=> {
-      //     setInputValue("")
-      //     setSelectedOption("misparIshi")
-      //     setTimeout(() => {
-      //       if (inputRef.current) {
-      //         inputRef.current.focus();
-      //       }
-      //     }, 100);
-      //   })
-      // }
+      const data = await response.json()
+      const statusCode = response.status
+      const errorCode = data.error_code
+      if (statusCode == 200){
+        const now = new Date()
+        const hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const formattedTime = hours+":"+minutes
+        Swal.fire({
+          position: "center",
+          icon: "success",
+          title: "הגעתך נרשמה בהצלחה ב-" + formattedTime,
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup",
+            title: "custom-title-success",
+          },
+        }).then(()=> {
+          setInputValue("")
+          setSelectedOption("misparIshi")
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 100);
+        })
+      }
+      if (statusCode == 400 && errorCode == 104){
+        Swal.fire({
+          title: 'משתמש חדש',
+          text: 'אנא הכנס שם מלא:',
+          input: 'text',
+          inputPlaceholder: 'הכנס שם מלא',
+          confirmButtonText: 'שלח',
+          customClass: {
+            popup: 'custom-popup',
+            title: 'custom-title-success',
+            input: 'custom-input',
+            confirmButton: 'custom-button',
+          },
+          showCancelButton: true,
+          cancelButtonText: 'בטל',
+          didOpen: () => {
+            const swalInput = document.querySelector('.swal2-input');
+            if (swalInput) {
+              swalInput.focus();
+              document.activeElement=swalInput
+            }
+          },
+          preConfirm: (inputValue) => {
+            if (!inputValue || inputValue.trim().split(' ').length < 2) {
+              Swal.showValidationMessage('יש להכניס שם מלא המכיל לפחות שתי מילים');
+              return false;
+            }
+            return inputValue;
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const fullName = result.value;
+            console.log('Nombre completo ingresado:', fullName);
+            // Aquí puedes enviar el nombre completo al backend o manejarlo
+            Swal.fire({
+              title: 'הצלחה!',
+              text: `שם ${fullName} נשמר בהצלחה.`,
+              icon: 'success',
+            });
+          }
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        });
+      }
+      else{ 
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"          
+          },
+        }).then(()=> {
+          setInputValue("")
+          setSelectedOption("misparIshi")
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          }, 100);
+        })
+      }
+      
     }
   };
 
@@ -105,7 +175,15 @@ const HomePage = () => {
   
   useEffect(() => {
     const handleFocusChange = () => {
-      inputRef.current.focus();
+      const swalInput = Swal.getInput();
+      if (!swalInput || document.activeElement !== swalInput) {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+        else{
+          swalInput.focus()
+        }
+      }
     };
   
     window.addEventListener("focus", handleFocusChange, true);
@@ -116,6 +194,7 @@ const HomePage = () => {
       window.removeEventListener("blur", handleFocusChange, true);
     };
   }, []);
+  
   
 
   return (

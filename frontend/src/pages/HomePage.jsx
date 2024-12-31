@@ -4,7 +4,7 @@ import NamePage from './NamePage';
 
 function HomePage() {
 
-    const [currentCard, setCurrentCard] = useState("inputCard");
+    const [currentCard, setCurrentCard] = useState("inputCar");
     const [selectedOption, setSelectedOption] = useState("misparIshi");
     const [inputID, setInputID] = useState("");
 

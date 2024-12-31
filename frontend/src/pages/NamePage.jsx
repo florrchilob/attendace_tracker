@@ -1,17 +1,30 @@
 import React, { useState } from 'react'
 import TypingGif from '../assets/gifs/Typing.gif'
+import Swal from "sweetalert2";
+import '../App.css'
+
 
 function NamePage({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
     const [fullName, setFullName] = useState("")
-  
 
-    // const handleSubmit = () => {
-    //   if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
-    //     alert("אנא הכנס שם מלא המכיל לפחות שתי מילים");
-    //     return;
-    //   }
-    //   onSubmitName(fullName);
-    // };
+    const handleSubmit = () => {
+      if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
+        Swal.fire({
+          icon: "error",
+          title: "שגיאה",
+          text: "אנא הכנס שם מלא המכיל לפחות שתי מילים",
+          showConfirmButton: false,
+          timer: 3500,
+          customClass: {
+            popup: "custom-popup",
+            title: "custom-title-error",
+          },
+        });
+        return;
+      }
+    //   LLamar a backend para guardar el nombre en la base de datos
+    };
+    
   
     return (
     <div
@@ -33,8 +46,8 @@ function NamePage({ inputID, setInputID, selectedOption, setSelectedOption, setC
                         />
                         <div className="flex gap-4 justify-center">
                             <button
-                                // onClick={handleSubmit}
-                                className="py-4 px-16 mx-12 mt-6 bg-greenConvined border-none text-black rounded-2xl font-bold hover:bg-limeConvined transition"
+                                onClick={handleSubmit}
+                                className="py-4 px-16 mx-12 mt-6 bg-turquiseConvined border-none text-black rounded-2xl font-bold hover:bg-limeConvined transition"
                                 >
                                 שלח
                             </button>

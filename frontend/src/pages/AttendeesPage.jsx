@@ -9,6 +9,9 @@ import ErrorPage from "../components/ErrorPage";
 const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [file, setFile] = useState(null);
+
   
   useEffect(() => {
     async function fetchAttendees() {
@@ -20,12 +23,22 @@ const AttendeesPage = () => {
       } catch (error) {
         setLoading(null)
       } finally {
-        setLoading(null);
+        setLoading(false);
       }
     }
     fetchAttendees();
   }, []);
   
+  const formatDate = (isoString) => {
+    const date = new Date(isoString)
+    const day = String(date.getDate()).padStart(2, "0")
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = String(date.getHours()).padStart(2, "0")
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+  
+    return `${day}/${month}/${year} ${hours}:${minutes}`
+  };
 
   const handleDelete = (index) => {
     const newAttendees = attendees.filter((_, i) => i !== index);
@@ -33,22 +46,66 @@ const AttendeesPage = () => {
   };
 
 
-  const handleImport = (e) => {
+  const handleImport = async(e) => {
+    setFile(true);
     const file = e.target.files[0];
     const reader = new FileReader();
+    let jsonData = null
   
     reader.onload = (event) => {
       const data = new Uint8Array(event.target.result);
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
+      jsonData = XLSX.utils.sheet_to_json(sheet);
   
-      console.log(jsonData);
+      const columnMapping = {
+        "תעודת זהות": "tehudat_zehut",
+        "מספר אישי": "mispar_ishi",
+        "שם מלא": "full_name",
+        "נוכחות": "arrived",
+        "תאריך הגעה": "date_arrived",
+      };
+  
+      jsonData = jsonData.map((row) => {
+        const newRow = {};
+  
+        for (let key in row) {
+          if (columnMapping[key]) {
+            if (columnMapping[key] === "arrived") {
+              newRow[columnMapping[key]] =
+                row[key] === "כן" ? true : row[key] === "לא" ? false : null;
+            } else if (columnMapping[key] === "date_arrived" && row[key]) {
+              const dateParts = row[key].split(" ")
+              const date = dateParts[0].split("/").reverse().join("-")
+              newRow[columnMapping[key]] = `${date}T${dateParts[1]}`
+            } else {
+              newRow[columnMapping[key]] = row[key]
+            }
+          }
+        }
+        return newRow;
+      });
     };
   
     reader.readAsArrayBuffer(file);
+
+    const toSend = {"attendees": [jsonData]}
+      let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+          method:'POST',
+                  headers: {
+                      'Access-Control-Allow-Origin': 'http://localhost:5173',
+                      'Content-Type': 'application/json', 
+                  },
+                  body: JSON.stringify(toSend)
+
+      })
+      const dataResponse = await response.json()
+      const statusCode = response.status
+      const errorCode = dataResponse.error_code
+      console.log(dataResponse)
   };
+  
 
   // const handleEdit = (index) => {
   //   const newName = prompt("Ingrese un nuevo nombre:");
@@ -68,20 +125,44 @@ return (
         <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
           רשימת משתתפים
         </h1>
-        {loading === true &&
+        {loading === false &&
           (
             <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
               הגיעו {attendees.length}/{attendees.filter(a => a.arrived).length}
             </h1>
           )
         }
-        <input
-            type="file"
-            accept=".xlsx"
-            onChange={handleImport}
-            className="transition-all duration-400 block mb-4 bg-transparent hover:bg-lavanderConvined
-             border-white hover:border-white font-semibold justify-start my-4 text-white bg-gray-700 rounded-lg p-2"
-          />
+        {adding ? (
+          <div className="flex items-center space-x-2 transition-all duration-500 flex-row py-auto">
+            <input
+              type="file"
+              accept=".xlsx"
+              onChange={handleImport}
+              className="transition-all duration-400 block my-4 bg-transparent hover:bg-lavanderConvined
+              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-lg p-2 flex-col"
+            />
+            {file &&
+              <button
+                onClick={() => {
+                  setAdding(false);
+                  setFile(null);
+                }}
+                className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3 flex-col my-auto"
+              >
+                ✕
+              </button>
+            }
+          </div>
+        ) : (
+          <button
+            onClick={() => setAdding(true)}
+            className="transition-all duration-500 block mb-4 bg-transparent hover:bg-lavanderConvined
+            border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-2"
+          >
+            <AddLogo />
+          </button>
+        )}
+
 
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
         <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
@@ -104,6 +185,13 @@ return (
                   </div>
                 </td>
               </tr>
+            ) : loading === null ? (
+              <tr>
+                <div className="flex justify-center items-center mx-auto flex-col">
+                  <h4 className="text-4xl font-bold text-center mb-[-80px] text-white justify-center flex flex-col"> מצטערים יש לנו תקלה כרגע נה לנשות שוב מאוחר יותר</h4>
+                  <ErrorPage />
+                </div>
+              </tr>
             ) : (
               Array.isArray(attendees) && attendees.map((attendee, index) => (
                 <tr key={index} className="border-b bg-gray-800 border-gray-600 hover:bg-gray-600">
@@ -114,7 +202,7 @@ return (
                     {attendee.arrived ? "כן" : "לא"}
                   </td>
                   <td className="px-4 py-2 text-pinkConvined text-lg text-center">
-                    {attendee.date_arrived || "—"}
+                    {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
                   </td>
                   <td className="p-2 flex justify-center">
                     {/* <button

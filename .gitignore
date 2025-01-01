@@ -1,6 +1,6 @@
 
 .codegpt
-frontend/assets/gifs/
+frontend/src/assets/
 frontend/src/assets/gifs/error-page.gif
 frontend/src/assets/gifs/error-page.gif
 frontend/src/assets/gifs/Scanning.gif

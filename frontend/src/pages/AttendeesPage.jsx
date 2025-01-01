@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
+import LoadingIcon from "../components/loading";
+import ErrorPage from "../components/ErrorPage";
 
 const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([]);
@@ -10,13 +12,13 @@ const AttendeesPage = () => {
   useEffect(() => {
     async function fetchAttendees() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/attendees");
+        const response = await fetch("http://127.0.0.1:8000/attendees/get");
         const data = await response.json();
         setAttendees(data);
       } catch (error) {
-        console.error("Error fetching attendees:", error);
+        setLoading(null)
       } finally {
-        setLoading(false);
+        setLoading(null);
       }
     }
     fetchAttendees();
@@ -53,11 +55,6 @@ const AttendeesPage = () => {
       dir="rtl"
       className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
     >      
-    {loading ? (
-      <div className="flex justify-center items-center h-full">
-        <img src="/path/to/loading.gif" alt="Loading..." />
-      </div>
-    ) : (
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
         <h1 className="text-4xl font-bold text-center mb-6 text-white">רשימת משתתפים</h1>
         <button
@@ -79,37 +76,58 @@ const AttendeesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {attendees.map((attendee, index) => (
-                <tr key={index} className="border-b bg-gray-800  border-gray-600 hover:bg-gray-600">
-                  <td className="px-4 py-2 text-limeConvined text-lg text-center">{attendee.mispar_ishi}</td>
-                  <td className="px-4 py-2 text-turquiseConvined text-lg text-center">{attendee.tehudat_zehut}</td>
-                  <td className="px-4 py-2 text-greenConvined text-lg text-center">{attendee.full_name}</td>
-                  <td className="px-4 py-2 text-lavanderConvined text-lg text-center">{attendee.arrived ? "כן" : "לא"}</td>
-                  <td className="px-4 py-2 text-pinkConvined text-lg text-center">{attendee.date_arrived || "—"}</td>
-                  <td className="p-2 flex justify-center">
-                    <button
-                      onClick={() => handleEdit(index)}
-                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
-                    >
-                      <EditLogo/>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(index)}
-                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"
-                    >
-                      <GarbageLogo/>
-                    </button>
+              {loading === true ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-10">
+                    <div className="flex justify-center items-center">
+                      <LoadingIcon />
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : loading === null ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-10 text-red-500">
+                    <ErrorPage/>
+                  </td>
+                </tr>
+              ) : (
+                Array.isArray(attendees) && attendees.map((attendee, index) => (
+                  <tr key={index} className="border-b bg-gray-800 border-gray-600 hover:bg-gray-600">
+                    <td className="px-4 py-2 text-limeConvined text-lg text-center">{attendee.mispar_ishi}</td>
+                    <td className="px-4 py-2 text-turquiseConvined text-lg text-center">{attendee.tehudat_zehut}</td>
+                    <td className="px-4 py-2 text-greenConvined text-lg text-center">{attendee.full_name}</td>
+                    <td className="px-4 py-2 text-lavanderConvined text-lg text-center">
+                      {attendee.arrived ? "כן" : "לא"}
+                    </td>
+                    <td className="px-4 py-2 text-pinkConvined text-lg text-center">
+                      {attendee.date_arrived || "—"}
+                    </td>
+                    <td className="p-2 flex justify-center">
+                      <button
+                        onClick={() => handleEdit(index)}
+                        className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
+                      >
+                        <EditLogo/>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(index)}
+                        className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"
+                      >
+                        <GarbageLogo/>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
-    )}
-
     </div>
   );
+  
+  
+  
 };
 
 export default AttendeesPage;

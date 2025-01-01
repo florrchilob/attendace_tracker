@@ -122,12 +122,13 @@ def test_edit_attendees_valid_date():
     assert status == 200
 
 def test_edit_attendees_update_all_fields_double_mispar_ishi(random_data_edit):
-    _, _, random_tehudat_zehut = random_data_edit
+    _, random_mispar_ishi, random_tehudat_zehut = random_data_edit
+    create_get_id_attendee(mispar_ishi_sent=random_mispar_ishi)
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(
         sent={
             "id": id_to_edit,
-            "mispar_ishi": "6543210",
+            "mispar_ishi": random_mispar_ishi,
             "tehudat_zehut": random_tehudat_zehut,
             "full_name": "Updated Name",
             "arrived": True,
@@ -138,13 +139,14 @@ def test_edit_attendees_update_all_fields_double_mispar_ishi(random_data_edit):
     assert data["error_code"] == 3
 
 def test_edit_attendees_update_all_fields_double_tehudat_zehut(random_data_edit):
-    _, random_mispar_ishi, _ = random_data_edit
+    _, random_mispar_ishi, random_tehudat_zehut = random_data_edit
+    create_get_id_attendee(tehudat_zehut=random_tehudat_zehut)
     id_to_edit = create_get_id_attendee()
     status, data = edit_attendees(
         sent={
             "id": id_to_edit,
             "mispar_ishi": random_mispar_ishi,
-            "tehudat_zehut": "987654321",
+            "tehudat_zehut": random_tehudat_zehut,
             "full_name": "Updated Name",
             "arrived": True,
             "date_arrived": "2023-12-15 10:00:00",

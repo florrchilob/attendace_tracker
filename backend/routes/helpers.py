@@ -115,8 +115,11 @@ def validating(key, value, type_variable):
             if type_variable == str:
                 if not value.isdigit():
                     return (400, 3)
-            if len(value) < 6:
-                return (400, 3)
+                if len(value) < 6:
+                    return(400, 3)
+            else:
+                if len(str(value)) < 6:
+                    return (400, 3)
             if value[0] == "0":
                 return(400, 3)
         case "tehudat_zehut":
@@ -125,8 +128,11 @@ def validating(key, value, type_variable):
             if type_variable == str:
                 if not value.isdigit():
                     return (400, 4)
-            if len(value) != 9:
-                return (400, 4)
+                if len(value) != 9:
+                    return(400, 4)
+            else:
+                if len(str(value)) != 9:
+                    return (400, 4)
         case "variable":
             if value == None: 
                 return (400, 103)  

@@ -4,25 +4,41 @@ import Swal from "sweetalert2";
 import '../App.css'
 
 
-function NamePage({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
+function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
     const [fullName, setFullName] = useState("")
 
-    const handleSubmit = () => {
-      if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
-        Swal.fire({
-          icon: "error",
-          title: "שגיאה",
-          text: "אנא הכנס שם מלא המכיל לפחות שתי מילים",
-          showConfirmButton: false,
-          timer: 3500,
-          customClass: {
-            popup: "custom-popup",
-            title: "custom-title-error",
-          },
-        });
-        return;
-      }
-    //   LLamar a backend para guardar el nombre en la base de datos
+    const handleSubmit = async() => {
+        if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
+            Swal.fire({
+            icon: "error",
+            title: "שגיאה",
+            text: "אנא הכנס שם מלא המכיל לפחות שתי מילים",
+            showConfirmButton: false,
+            timer: 3500,
+            customClass: {
+                popup: "custom-popup",
+                title: "custom-title-error",
+            },
+            });
+            return;
+        }
+        const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
+        console.log(formattedOption)
+        const attendee = {[formattedOption]: inputID.toString(), "full_name": fullName}
+        const toSend = {"attendees": [attendee]}
+        let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+            method:'POST',
+                    headers: {
+                        'Access-Control-Allow-Origin': 'http://localhost:5173',
+                        'Content-Type': 'application/json', 
+                    },
+                    body: JSON.stringify(toSend)
+
+        })
+        const data = await response.json()
+        const statusCode = response.status
+        const errorCode = data.error_code
+        console.log(data)
     };
     
   

@@ -6,7 +6,7 @@ function HomePage() {
 
     const [currentCard, setCurrentCard] = useState("inputCar");
     const [selectedOption, setSelectedOption] = useState("misparIshi");
-    const [inputID, setInputID] = useState("");
+    const [inputID, setInputID] = useState(22222222222222);
 
 
     return (

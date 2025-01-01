@@ -47,8 +47,8 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
     }
     else{
       const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
-      let attendee = {[formattedOption]: inputID.toString()}
-      let response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
+      const attendee = {[formattedOption]: inputID.toString()}
+      const response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
         method:'PUT',
                 headers: {
                     'Access-Control-Allow-Origin': 'http://localhost:5173',
@@ -116,7 +116,7 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
 
   const onChangeSelect = (e) => {
     if (e.target.value == "misparIshi" && inputID.length > 11 || e.target.value == "tehudatZehut" && inputID.length > 9){
-      setinputID("")
+      setInputID("")
     }
     setSelectedOption(e.target.value)
     if (inputRef.current) {
@@ -132,16 +132,10 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
   
   useEffect(() => {
     const handleFocusChange = () => {
-      const swalInput = Swal.getInput();
-      if (!swalInput || document.activeElement !== swalInput) {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-        else{
-          swalInput.focus()
-        }
+      if (inputRef.current) {
+        inputRef.current.focus();
       }
-    };
+    }
   
     window.addEventListener("focus", handleFocusChange, true);
     window.addEventListener("blur", handleFocusChange, true);
@@ -160,7 +154,7 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
       className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center overflow-hidden"
     >      
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10 h-full px-auto py-auto items-center overflow-hidden">
-        <h1 className="text-4xl font-bold text-white mb-8 text-center flex-row">איזה כיף שמישהבו הגיע!</h1>
+        <h1 className="text-4xl font-bold text-white mb-8 text-center flex-row">איזה כיף שמישהו הגיע!</h1>
         <div className="flex flex-row justify-center mt-16">
           <div className="w-5/12 text-center flex justify-center flex-col items-center relative z-20 transition-all duration-500">
             <select

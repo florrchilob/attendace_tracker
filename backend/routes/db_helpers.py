@@ -82,9 +82,9 @@ def db_saving(to_save, table, testing = None):
     global session
     if session is None:
         db_open_session()
+    query = table.insert().values(**to_save.__dict__)
+    response = session.execute(query)
     try:
-        query = table.insert().values(**to_save.__dict__)
-        response = session.execute(query)
         if response.rowcount >= 1:
             session.commit()
             if testing == "id":

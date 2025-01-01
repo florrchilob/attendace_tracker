@@ -47,7 +47,12 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
     }
     else{
       const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
-      const attendee = {[formattedOption]: inputID.toString()}
+      let stringInputID = inputID.toString()
+      if (selectedOption == "misparIshi" && stringInputID.startsWith("0")) {
+        stringInputID = stringInputID.slice(1)
+      }
+      const attendee = {[formattedOption]: stringInputID}
+      console.log(attendee)
       const  response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
         method:'PUT',
                 headers: {

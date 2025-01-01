@@ -70,13 +70,13 @@ const AttendeesPage = () => {
                   <td className="p-2 flex justify-center">
                     <button
                       onClick={() => handleEdit(index)}
-                      className="py-1 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
+                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
                     >
                       <EditLogo/>
                     </button>
                     <button
                       onClick={() => handleDelete(index)}
-                      className="py-1 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"
+                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"
                     >
                       <GarbageLogo/>
                     </button>

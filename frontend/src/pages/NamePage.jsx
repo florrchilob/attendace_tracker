@@ -98,6 +98,13 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
                     placeholder="הכנס שם מלא"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    onKeyDown={(e) => 
+                        {
+                          if (e.key === "Enter") {
+                            handleSubmit();
+                          }
+                        }
+                    }
                     />
                     <div className="flex gap-4 justify-center">
                         <button

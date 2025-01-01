@@ -169,6 +169,13 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
             placeholder="הכנס מספר"
             value={inputID}
             onChange={() => onChangeInput()}
+            onKeyDown={(e) => 
+              {
+                if (e.key === "Enter") {
+                  handleSubmit();
+                }
+              }
+            }
           />
           <button
             onClick={handleSubmit}

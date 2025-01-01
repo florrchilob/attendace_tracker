@@ -17,7 +17,7 @@ function HomePage() {
       x: 0,
       opacity: 1,
       transition: {
-        type: "tween", 
+        type: "tween",
         duration: 0.3,
       },
     },
@@ -30,7 +30,7 @@ function HomePage() {
       },
     }),
   };
-
+  
   const [direction, setDirection] = useState(1);
 
   const switchToInputCard = () => {
@@ -48,7 +48,7 @@ function HomePage() {
       <AnimatePresence custom={direction} mode="wait">
         {currentCard === "inputCard" ? (
           <motion.div
-            key="inputCard"
+            key={currentCard}
             custom={direction}
             initial="initial"
             animate="animate"
@@ -66,7 +66,7 @@ function HomePage() {
           </motion.div>
         ) : (
           <motion.div
-            key="nameCard"
+            key={currentCard}
             custom={direction}
             initial="initial"
             animate="animate"

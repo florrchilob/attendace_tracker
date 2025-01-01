@@ -4,10 +4,24 @@ import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
 
 const AttendeesPage = () => {
-  const [attendees, setAttendees] = useState([
-    { mispar_ishi: "123456", tehudat_zehut: "987654321", full_name: "זינזו צ'אן לי", arrived: true, date_arrived: "2023-12-17" },
-    { mispar_ishi: "234567", tehudat_zehut: "876543219", full_name: "ג'יט סרו", arrived: false, date_arrived: null },
-  ]);
+  const [attendees, setAttendees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    async function fetchAttendees() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/attendees");
+        const data = await response.json();
+        setAttendees(data);
+      } catch (error) {
+        console.error("Error fetching attendees:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAttendees();
+  }, []);
+  
 
   const handleDelete = (index) => {
     const newAttendees = attendees.filter((_, i) => i !== index);
@@ -39,6 +53,11 @@ const AttendeesPage = () => {
       dir="rtl"
       className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
     >      
+    {loading ? (
+      <div className="flex justify-center items-center h-full">
+        <img src="/path/to/loading.gif" alt="Loading..." />
+      </div>
+    ) : (
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
         <h1 className="text-4xl font-bold text-center mb-6 text-white">רשימת משתתפים</h1>
         <button
@@ -87,6 +106,8 @@ const AttendeesPage = () => {
           </table>
         </div>
       </div>
+    )}
+
     </div>
   );
 };

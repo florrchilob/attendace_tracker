@@ -20,7 +20,7 @@ const AttendeesPage = () => {
       } catch (error) {
         setLoading(null)
       } finally {
-        setLoading(false);
+        setLoading(null);
       }
     }
     fetchAttendees();
@@ -68,9 +68,13 @@ return (
         <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
           רשימת משתתפים
         </h1>
-        <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
-          הגיעו {attendees.length}/{attendees.filter(a => a.arrived).length}
-        </h1>
+        {loading === true &&
+          (
+            <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
+              הגיעו {attendees.length}/{attendees.filter(a => a.arrived).length}
+            </h1>
+          )
+        }
         <input
             type="file"
             accept=".xlsx"
@@ -95,15 +99,9 @@ return (
             {loading === true ? (
               <tr>
                 <td colSpan="6" className="text-center py-10">
-                  <div className="flex justify-center items-center">
+                  <div className="flex justify-center items-center mx-auto">
                     <LoadingIcon />
                   </div>
-                </td>
-              </tr>
-            ) : loading === null ? (
-              <tr>
-                <td colSpan="6" className="text-center py-10 text-red-500">
-                  שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.
                 </td>
               </tr>
             ) : (

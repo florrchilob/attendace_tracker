@@ -162,7 +162,6 @@ def logic_edit_attendee(attendee_to_edit, testing):
     if "date_arrived" in to_edit:
         to_edit["date_arrived"] = datetime.strftime(to_edit["date_arrived"], "%Y-%m-%d %H:%M:%S")
     response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": attendee_to_edit.id}, "values": to_edit})
-    print(response)
     if response == "error":
         return (500, 99)
     if response != True:

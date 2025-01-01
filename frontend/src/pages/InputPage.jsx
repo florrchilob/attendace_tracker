@@ -48,7 +48,7 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
     else{
       const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
       const attendee = {[formattedOption]: inputID.toString()}
-      const response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
+      const  response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
         method:'PUT',
                 headers: {
                     'Access-Control-Allow-Origin': 'http://localhost:5173',
@@ -68,7 +68,7 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
         Swal.fire({
           position: "center",
           icon: "success",
-          title: "הגעתך נרשמה בהצלחה ב-" + formattedTime,
+          title: "הגעה נרשמה בהצלחה ב-" + formattedTime,
           showConfirmButton: false,
           timer: 2500,
           customClass: {
@@ -85,32 +85,33 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
           }, 100);
         })
       }
-      if (statusCode == 400 && errorCode == 104){
-        setCurrentCard("nameCard")
+      else{
+          if (statusCode == 400 && errorCode == 104){
+            setCurrentCard("nameCard")
+          }
+          else{ 
+            Swal.fire({
+              position: "center",
+              icon: "error",
+              title: "שגיאת שרת פנימית",
+              text: "נסה שוב מאוחר יותר",
+              showConfirmButton: false,
+              timer: 2500,
+              customClass: {
+                popup: "custom-popup-505",
+                title: "custom-popup-505-title"          
+              },
+            }).then(()=> {
+              setInputID("")
+              setSelectedOption("misparIshi")
+              setTimeout(() => {
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }, 100);
+            })
+          }
       }
-      else{ 
-        Swal.fire({
-          position: "center",
-          icon: "error",
-          title: "שגיאת שרת פנימית",
-          text: "נסה שוב מאוחר יותר",
-          showConfirmButton: false,
-          timer: 2500,
-          customClass: {
-            popup: "custom-popup-505",
-            title: "custom-popup-505-title"          
-          },
-        }).then(()=> {
-          setInputID("")
-          setSelectedOption("misparIshi")
-          setTimeout(() => {
-            if (inputRef.current) {
-              inputRef.current.focus();
-            }
-          }, 100);
-        })
-      }
-      
     }
   };
 
@@ -149,47 +150,42 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
   
 
   return (
-    <div
-      dir="rtl"
-      className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center overflow-hidden"
-    >      
-      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10 h-full px-auto py-auto items-center overflow-hidden">
-        <h1 className="text-4xl font-bold text-white mb-8 text-center flex-row">איזה כיף שמישהו הגיע!</h1>
-        <div className="flex flex-row justify-center mt-16">
-          <div className="w-5/12 text-center flex justify-center flex-col items-center relative z-20 transition-all duration-500">
-            <select
-              className="w-full mb-4 p-2 bg-gray-700 text-white rounded-lg h-12"
-              value={selectedOption}
-              onChange={(e) => onChangeSelect(e)}
-            >
-              <option value="misparIshi">מספר אישי</option>
-              <option value="tehudatZehut">תעודת זהות</option>
-            </select>
-            <input
-              ref={inputRef}
-              type="number"
-              className="w-full p-2 bg-gray-700 text-white rounded-lg mb-4 h-12"
-              placeholder="הכנס מספר"
-              value={inputID}
-              onChange={() => onChangeInput()}
-            />
-            <button
-              onClick={handleSubmit}
-              className="px-16 py-2 bg-turquiseConvined text-black rounded-3xl border-white font-bold hover:bg-greenConvined hover:border-white transition"
-            >
-              שלח
-            </button>
-          </div>
+    <div className="bg-gray-800 bg-opacity-90 rounded-3xl w-full shadow-lg p-6 py-10 my-auto items-center overflow-hidden">
+      <h1 className="text-4xl font-bold text-white mb-8 text-center flex-row">איזה כיף שמישהו הגיע!</h1>
+      <div className="flex flex-row justify-center mt-16">
+        <div className="w-5/12 text-center flex justify-center flex-col items-center relative z-20 transition-all duration-500">
+          <select
+            className="w-full mb-4 p-2 bg-gray-700 text-white rounded-lg h-12"
+            value={selectedOption}
+            onChange={(e) => onChangeSelect(e)}
+          >
+            <option value="misparIshi">מספר אישי</option>
+            <option value="tehudatZehut">תעודת זהות</option>
+          </select>
+          <input
+            ref={inputRef}
+            type="number"
+            className="w-full p-2 bg-gray-700 text-white rounded-lg mb-4 h-12"
+            placeholder="הכנס מספר"
+            value={inputID}
+            onChange={() => onChangeInput()}
+          />
+          <button
+            onClick={handleSubmit}
+            className="px-16 py-2 bg-turquiseConvined text-black rounded-3xl border-white font-bold hover:bg-greenConvined hover:border-white transition"
+          >
+            שלח
+          </button>
         </div>
-        <div className="py-0 justify-between items-stretch flex flex-row h-auto overflow-hidden my-[-69px] z-0 ms-[-109px]">
-          <div className="w-3/5 flex align-center flex-col justify-end items-start">
-            <img className="flex my-auto justify-end" src={ScanningGif} alt="Barcode Scanner"/>
-          </div>
-          <div className="w-2/5 flex align-center flex-col justify-end items-end">
-              <img className="flex my-auto justify-start" src={TypingGif} alt="Barcode Scanner" />
-          </div>
-          
+      </div>
+      <div className="py-0 justify-between items-stretch flex flex-row h-auto overflow-hidden my-[-69px] z-0 ms-[-109px]">
+        <div className="w-3/5 flex align-center flex-col justify-end items-start">
+          <img className="flex my-auto justify-end" src={ScanningGif} alt="Barcode Scanner"/>
         </div>
+        <div className="w-2/5 flex align-center flex-col justify-end items-end">
+            <img className="flex my-auto justify-start" src={TypingGif} alt="Barcode Scanner" />
+        </div>
+        
       </div>
     </div>
   );

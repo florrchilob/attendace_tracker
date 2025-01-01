@@ -188,7 +188,7 @@ def db_updating(to_update):
             return "error"
     # Type 2 = restart attendace all attendees
     if to_update.get("type") == 2:
-        query = attendees.update().values(arrived = False)
+        query = attendees.update().values(arrived = False, date_arrived = None)
         try:
             response = session.execute(query)
             return True

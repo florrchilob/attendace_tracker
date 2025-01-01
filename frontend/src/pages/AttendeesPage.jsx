@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import React, { useEffect, useState } from "react";
 import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
@@ -31,25 +32,32 @@ const AttendeesPage = () => {
     setAttendees(newAttendees);
   };
 
-  const handleAdd = () => {
-    const newAttendee = {
-      mispar_ishi: "Nuevo",
-      tehudat_zehut: "Nuevo",
-      full_name: "חדש",
-      arrived: false,
-      date_arrived: null,
+
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+  
+    reader.onload = (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+  
+      console.log(jsonData);
     };
-    setAttendees([...attendees, newAttendee]);
+  
+    reader.readAsArrayBuffer(file);
   };
 
-  const handleEdit = (index) => {
-    const newName = prompt("Ingrese un nuevo nombre:");
-    if (newName) {
-      const newAttendees = [...attendees];
-      newAttendees[index].full_name = newName;
-      setAttendees(newAttendees);
-    }
-  };
+  // const handleEdit = (index) => {
+  //   const newName = prompt("Ingrese un nuevo nombre:");
+  //   if (newName) {
+  //     const newAttendees = [...attendees];
+  //     newAttendees[index].full_name = newName;
+  //     setAttendees(newAttendees);
+  //   }
+  // };
 
 return (
   <div
@@ -63,12 +71,14 @@ return (
         <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
           הגיעו {attendees.length}/{attendees.filter(a => a.arrived).length}
         </h1>
-      <button
-          onClick={handleAdd}
-          className="transition-all duration-400 block mb-4 p-2 bg-transparent hover:bg-lavanderConvined border-white hover:border-white font-semibold rounded-full justify-start"
-        >
-        <AddLogo/>
-      </button>
+        <input
+            type="file"
+            accept=".xlsx"
+            onChange={handleImport}
+            className="transition-all duration-400 block mb-4 bg-transparent hover:bg-lavanderConvined
+             border-white hover:border-white font-semibold justify-start my-4 text-white bg-gray-700 rounded-lg p-2"
+          />
+
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
         <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
           <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
@@ -109,12 +119,12 @@ return (
                     {attendee.date_arrived || "—"}
                   </td>
                   <td className="p-2 flex justify-center">
-                    <button
+                    {/* <button
                       onClick={() => handleEdit(index)}
                       className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
                     >
                       <EditLogo/>
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleDelete(index)}
                       className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"

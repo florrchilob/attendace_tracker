@@ -208,7 +208,9 @@ def logic_attendee_arrived(attendee: Attendee, testing: str = None):
         return (500, 99)
     if db_validation == True:
         return (400, 104)
-    response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": db_validation.id}, "values": {"arrived": True}})
+    now = datetime.now()
+    formatted_date = now.strftime("%Y-%m-%dT%H:%M:%S")
+    response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": db_validation.id}, "values": {"arrived": True, "date_arrived": formatted_date}})
     if response == "error":
         return (500, 99)
     if response != True:

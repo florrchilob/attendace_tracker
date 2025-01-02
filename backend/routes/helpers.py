@@ -90,12 +90,6 @@ def validating(key, value, type_variable):
         case "full_name":
             if value == None:
                 return (400, 1)
-            if type_variable != str or len(value.strip()) < 0:
-                return (400, 1)
-            else:
-                words = value.split(" ")
-                if len(words) < 2:
-                    return (400, 2)
             if len(value)>254:
                 return (400, 1)
             contains_numbers = re.compile(r'\d')

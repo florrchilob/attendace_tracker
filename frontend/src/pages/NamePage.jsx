@@ -28,7 +28,11 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
           .slice(0, 19)
           .replace("T", " ");
         const formattedOption = selectedOption.replace(/([A-Z])/g, "_$1").toLowerCase();
-        const attendee = {[formattedOption]: inputID.toString(), "full_name": fullName, "arrived": true, "date_arrived": localISOTime}
+        let stringInputID = inputID.toString()
+        if (selectedOption == "misparIshi" && stringInputID.startsWith("0")) {
+            stringInputID = stringInputID.slice(1)
+        }
+        const attendee = {[formattedOption]: stringInputID, "full_name": fullName, "arrived": true, "date_arrived": localISOTime}
         const toSend = {"attendees": [attendee]}
         let response = await fetch("http://127.0.0.1:8000/attendees/create", {
             method:'POST',

@@ -225,3 +225,11 @@ def restart_attendace():
     if response == "error":
         return to_return(500, 99)
     return to_return(200, 0)
+
+
+@attendees_route.delete("/deleteall")
+def delete_all_attendees():
+    response = db_deleting({"table": attendees})
+    if response == "error":
+        return to_return(500, 99)
+    return to_return(200, 0)

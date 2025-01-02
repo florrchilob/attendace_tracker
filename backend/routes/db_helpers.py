@@ -64,10 +64,9 @@ def db_deleting(to_delete):
     global session
     if session is None:
         db_open_session()
-    id = to_delete.get("id")
     table = to_delete.get("table")
     try:
-        query = table.delete().where(table.c.id == id)
+        query = table.delete()
         response = session.execute(query)
         if response.rowcount >= 1:
             session.commit()

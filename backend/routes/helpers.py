@@ -92,15 +92,6 @@ def validating(key, value, type_variable):
                 return (400, 1)
             if len(value)>254:
                 return (400, 1)
-            contains_numbers = re.compile(r'\d')
-            if bool(contains_numbers.search(value)):
-                return (400, 1)
-            hebrew_pattern = re.compile(r'^[\u0590-\u05FF\s]+$')
-            english_pattern = re.compile(r'^[a-zA-Z\s]+$')
-            hebrew = bool(hebrew_pattern.match(value))
-            english = bool(english_pattern.match(value))
-            if not hebrew and not english:
-                return (400, 1)
             if len(value) > 255:
                 return (400, 1)
         case "mispar_ishi":

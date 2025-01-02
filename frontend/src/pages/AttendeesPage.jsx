@@ -82,9 +82,7 @@ const AttendeesPage = () => {
 
   };
 
-  const exportErrorsToExcel = (response) => {
-    const missingData = response.data.missing_data;
-    
+  const exportErrorsToExcel = (missingData) => {
     const formattedData = missingData.map((item) => ({
       "מספר אישי": item.attendee.mispar_ishi || "",
       "תעודת זהות": item.attendee.tehudat_zehut || "",
@@ -165,16 +163,16 @@ const AttendeesPage = () => {
       })
 
       const toSend = { "attendees": jsonData };
-      try {
-        let response = await fetch("http://127.0.0.1:8000/attendees/create", {
-          method: 'POST',
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(toSend)
-        });
-        if (response.status == 500){
+      fetch("http://127.0.0.1:8000/attendees/create", {
+        method: 'POST',
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(toSend)
+      })
+      .then(response => {
+        if (response.status === 500) {
           Swal.fire({
             position: "center",
             icon: "error",
@@ -184,16 +182,47 @@ const AttendeesPage = () => {
             timer: 2500,
             customClass: {
               popup: "custom-popup-505",
-              title: "custom-popup-505-title"          
+              title: "custom-popup-505-title"
             },
-          })
+          });
+          throw new Error("Server error 500"); // Detener la ejecución
         }
-        else{
-          const dataResponse = await response.json();
-          console.log(response["data"]["missing_data"])
-        }
-      } catch (error) {
+        return response.json();
+      })
+      .then(dataResponse => {
+        fetchAttendees()
+        const missingData = dataResponse["data"]["missing_data"];
+        if (missingData.length > 0) {
           Swal.fire({
+            position: "center",
+            icon: "warning",
+            title: "בדוק פרטים בבקשה",
+            text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
+            showConfirmButton: false,
+            timer: 2000,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"
+            },
+          });
+          exportErrorsToExcel(missingData)
+        } else {
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "הנתונים נשמרו בהצלחה",
+            showConfirmButton: false,
+            timer: 2000,
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          });
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        Swal.fire({
           position: "center",
           icon: "error",
           title: "שגיאת שרת פנימית",
@@ -202,10 +231,11 @@ const AttendeesPage = () => {
           timer: 2500,
           customClass: {
             popup: "custom-popup-505",
-            title: "custom-popup-505-title"          
+            title: "custom-popup-505-title"
           },
-        })
-      }
+        });
+      });
+      
       
 
         // fetchAttendees()

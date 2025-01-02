@@ -4,6 +4,8 @@ import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
 import LoadingIcon from "../components/loading";
+import Swal from "sweetalert2";
+
 // import ErrorPage from "../components/ErrorPage";
 
 const AttendeesPage = () => {
@@ -45,92 +47,124 @@ const AttendeesPage = () => {
     setAttendees(newAttendees);
   };
 
+  const exportErrorsToExcel = (response) => {
+    const missingData = response.data.misssing_data;
+    
+    const formattedData = missingData.map((item) => ({
+      "מספר אישי": item.attendee.mispar_ishi || "",
+      "תעודת זהות": item.attendee.tehudat_zehut || "",
+      "שם מלא": item.attendee.full_name || "",
+      "נוכחות": item.attendee.arrived === true ? "כן" : item.attendee.arrived === false ? "לא" : "",
+      "תאריך הגעה": item.attendee.date_arrived || "",
+      "שגיאה": item.error.message,
+    }));
+  
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "שגיאות");
+  
+    XLSX.writeFile(workbook, "missing_data_errors.xlsx", { bookType: "xlsx", type: "binary" });
+  };
 
   const handleImport = async(e) => {
     setFile(true);
     const file = e.target.files[0];
     const reader = new FileReader();
 
-reader.onload = async (event) => {
-  const data = new Uint8Array(event.target.result);
-  const workbook = XLSX.read(data, { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  let jsonData = XLSX.utils.sheet_to_json(sheet);
+    reader.onload = async (event) => {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      let jsonData = XLSX.utils.sheet_to_json(sheet);
 
-  const columnMapping = {
-    "תעודת זהות": "tehudat_zehut",
-    "מספר אישי": "mispar_ishi",
-    "שם מלא": "full_name",
-    "נוכחות": "arrived",
-    "תאריך הגעה": "date_arrived",
-  };
+      const columnMapping = {
+        "תעודת זהות": "tehudat_zehut",
+        "מספר אישי": "mispar_ishi",
+        "שם מלא": "full_name",
+        "נוכחות": "arrived",
+        "תאריך הגעה": "date_arrived",
+      };
 
-  jsonData = jsonData.map((row) => {
-    const newRow = {};
+      jsonData = jsonData.map((row) => {
+        const newRow = {};
 
-    for (let key in row) {
-      if (columnMapping[key]) {
-        // Caso para "arrived"
-        if (columnMapping[key] === "arrived") {
-          newRow[columnMapping[key]] =
-            row[key] === "כן" ? true : row[key] === "לא" ? false : null;
-    
-        // Caso para "date_arrived"
-        } else if (columnMapping[key] === "date_arrived" && row[key]) {
-          const value = row[key];
-    
-          // Verifica si es un número (formato serial de Excel)
-          if (typeof value === "number") {
-            const excelEpoch = new Date(1900, 0, 1); // Base: 1 de enero de 1900
-            const date = new Date(excelEpoch.getTime() + (value - 2) * 86400000); // Corrige el offset
-    
-            // Formatea a 'YYYY-MM-DD HH:mm:ss'
-            const formattedDate = date
-              .toISOString()
-              .replace("T", " ") // Cambia 'T' por espacio
-              .slice(0, 19); // Incluye hasta los segundos
-            newRow[columnMapping[key]] = formattedDate;
-    
-          // Verifica si es un string con formato fecha y hora
-          } else if (typeof value === "string" && value.includes(" ")) {
-            const dateParts = value.split(" "); // Divide fecha y hora
-            const date = dateParts[0].split("/").reverse().join("-"); // Reordena fecha
-            const time = dateParts[1]; // Hora
-            newRow[columnMapping[key]] = `${date} ${time}:00`; // Añade segundos ':00'
-    
-          // Si no coincide con los formatos esperados, lo deja como está
-          } else {
-            newRow[columnMapping[key]] = value;
+        for (let key in row) {
+          if (columnMapping[key]) {
+            const mappedKey = columnMapping[key];
+            const value = row[key];
+        
+            if (value !== null && value !== undefined && value !== "") {
+              if (mappedKey === "arrived") {
+                newRow[mappedKey] = value === "כן" ? true : value === "לא" ? false : null;
+        
+              } else if (mappedKey === "date_arrived") {
+                if (typeof value === "number") {
+                  const excelEpoch = new Date(1900, 0, 1); // Base: 1 de enero de 1900
+                  const date = new Date(excelEpoch.getTime() + (value - 2) * 86400000); // Corrige el offset
+        
+                  const formattedDate = date
+                    .toISOString()
+                    .replace("T", " ")
+                    .slice(0, 19);
+                  newRow[mappedKey] = formattedDate;
+        
+                } else if (typeof value === "string" && value.includes(" ")) {
+                  const dateParts = value.split(" ");
+                  const date = dateParts[0].split("/").reverse().join("-");
+                  const time = dateParts[1]; // Hora
+                  newRow[mappedKey] = `${date} ${time}:00`;
+        
+                } else {
+                  newRow[mappedKey] = value;
+                }
+        
+              } else {
+                newRow[mappedKey] = value;
+              }
+            }
           }
-    
-        // Para los demás campos, solo mapea el valor
-        } else {
-          newRow[columnMapping[key]] = row[key];
         }
-      }
-    }
-    
-    
-  
-    return newRow;
-  });
+         
+        return newRow;
+      })
 
-  const toSend = { "attendees": jsonData };
-  let response = await fetch("http://127.0.0.1:8000/attendees/create", {
-      method: 'POST',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(toSend)
-    });
+      const toSend = { "attendees": jsonData };
+      let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+          method: 'POST',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(toSend)
+        });
 
-    const dataResponse = await response.json();
+        const dataResponse = await response.json();
+        fetchAttendees()
+        if (response.status != 201){
+          exportErrorsToExcel(dataResponse)
+          alert("בדוק את תיקיית ההורדות שלך עבור קובץ השגיאות שהורד.");
+        }
+        else{
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "המשתתפים נוספו בהצלחה",
+            showConfirmButton: false,
+            timer: 2500,
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          })
+        }
+      };
+      
     fetchAttendees();
-  };
-
-  reader.readAsArrayBuffer(file);
+    setTimeout(() => {
+        setAdding(false);
+    }, 1000);
+    reader.readAsArrayBuffer(file);
 
   };
   

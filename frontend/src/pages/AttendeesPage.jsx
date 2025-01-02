@@ -4,7 +4,7 @@ import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
 import LoadingIcon from "../components/loading";
-import ErrorPage from "../components/ErrorPage";
+// import ErrorPage from "../components/ErrorPage";
 
 const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([]);
@@ -12,20 +12,20 @@ const AttendeesPage = () => {
   const [adding, setAdding] = useState(false);
   const [file, setFile] = useState(null);
 
+  async function fetchAttendees() {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/attendees/get");
+      const data = await response.json();
+      const attendees = data["data"]
+      setAttendees(attendees);
+    } catch (error) {
+      setLoading(null)
+    } finally {
+      setLoading(false);
+    }
+  }
   
   useEffect(() => {
-    async function fetchAttendees() {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/attendees/get");
-        const data = await response.json();
-        const attendees = data["data"]
-        setAttendees(attendees);
-      } catch (error) {
-        setLoading(null)
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchAttendees();
   }, []);
   
@@ -50,60 +50,88 @@ const AttendeesPage = () => {
     setFile(true);
     const file = e.target.files[0];
     const reader = new FileReader();
-    let jsonData = null
-  
-    reader.onload = (event) => {
-      const data = new Uint8Array(event.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      jsonData = XLSX.utils.sheet_to_json(sheet);
-  
-      const columnMapping = {
-        "תעודת זהות": "tehudat_zehut",
-        "מספר אישי": "mispar_ishi",
-        "שם מלא": "full_name",
-        "נוכחות": "arrived",
-        "תאריך הגעה": "date_arrived",
-      };
-  
-      jsonData = jsonData.map((row) => {
-        const newRow = {};
-  
-        for (let key in row) {
-          if (columnMapping[key]) {
-            if (columnMapping[key] === "arrived") {
-              newRow[columnMapping[key]] =
-                row[key] === "כן" ? true : row[key] === "לא" ? false : null;
-            } else if (columnMapping[key] === "date_arrived" && row[key]) {
-              const dateParts = row[key].split(" ")
-              const date = dateParts[0].split("/").reverse().join("-")
-              newRow[columnMapping[key]] = `${date}T${dateParts[1]}`
-            } else {
-              newRow[columnMapping[key]] = row[key]
-            }
+
+reader.onload = async (event) => {
+  const data = new Uint8Array(event.target.result);
+  const workbook = XLSX.read(data, { type: "array" });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  let jsonData = XLSX.utils.sheet_to_json(sheet);
+
+  const columnMapping = {
+    "תעודת זהות": "tehudat_zehut",
+    "מספר אישי": "mispar_ishi",
+    "שם מלא": "full_name",
+    "נוכחות": "arrived",
+    "תאריך הגעה": "date_arrived",
+  };
+
+  jsonData = jsonData.map((row) => {
+    const newRow = {};
+
+    for (let key in row) {
+      if (columnMapping[key]) {
+        // Caso para "arrived"
+        if (columnMapping[key] === "arrived") {
+          newRow[columnMapping[key]] =
+            row[key] === "כן" ? true : row[key] === "לא" ? false : null;
+    
+        // Caso para "date_arrived"
+        } else if (columnMapping[key] === "date_arrived" && row[key]) {
+          const value = row[key];
+    
+          // Verifica si es un número (formato serial de Excel)
+          if (typeof value === "number") {
+            const excelEpoch = new Date(1900, 0, 1); // Base: 1 de enero de 1900
+            const date = new Date(excelEpoch.getTime() + (value - 2) * 86400000); // Corrige el offset
+    
+            // Formatea a 'YYYY-MM-DD HH:mm:ss'
+            const formattedDate = date
+              .toISOString()
+              .replace("T", " ") // Cambia 'T' por espacio
+              .slice(0, 19); // Incluye hasta los segundos
+            newRow[columnMapping[key]] = formattedDate;
+    
+          // Verifica si es un string con formato fecha y hora
+          } else if (typeof value === "string" && value.includes(" ")) {
+            const dateParts = value.split(" "); // Divide fecha y hora
+            const date = dateParts[0].split("/").reverse().join("-"); // Reordena fecha
+            const time = dateParts[1]; // Hora
+            newRow[columnMapping[key]] = `${date} ${time}:00`; // Añade segundos ':00'
+    
+          // Si no coincide con los formatos esperados, lo deja como está
+          } else {
+            newRow[columnMapping[key]] = value;
           }
+    
+        // Para los demás campos, solo mapea el valor
+        } else {
+          newRow[columnMapping[key]] = row[key];
         }
-        return newRow;
-      });
-    };
+      }
+    }
+    
+    
   
-    reader.readAsArrayBuffer(file);
+    return newRow;
+  });
 
-    const toSend = {"attendees": [jsonData]}
-      let response = await fetch("http://127.0.0.1:8000/attendees/create", {
-          method:'POST',
-                  headers: {
-                      'Access-Control-Allow-Origin': 'http://localhost:5173',
-                      'Content-Type': 'application/json', 
-                  },
-                  body: JSON.stringify(toSend)
+  const toSend = { "attendees": jsonData };
+  let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+      method: 'POST',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(toSend)
+    });
 
-      })
-      const dataResponse = await response.json()
-      const statusCode = response.status
-      const errorCode = dataResponse.error_code
-      console.log(dataResponse)
+    const dataResponse = await response.json();
+    fetchAttendees();
+  };
+
+  reader.readAsArrayBuffer(file);
+
   };
   
 
@@ -186,11 +214,13 @@ return (
                 </td>
               </tr>
             ) : loading === null ? (
-              <tr>
-                <div className="flex justify-center items-center mx-auto flex-col">
-                  <h4 className="text-4xl font-bold text-center mb-[-80px] text-white justify-center flex flex-col"> מצטערים יש לנו תקלה כרגע נה לנשות שוב מאוחר יותר</h4>
-                  <ErrorPage />
-                </div>
+              <tr className="h-60">
+                <td>
+                  <div className="flex justify-center items-center mx-auto flex-col">
+                    <h4 className="text-4xl font-bold text-center mb-[-80px] text-white justify-center flex flex-col"> מצטערים יש לנו תקלה כרגע נה לנשות שוב מאוחר יותר</h4>
+                    {/* <ErrorPage /> */}
+                  </div>
+                </td>
               </tr>
             ) : (
               Array.isArray(attendees) && attendees.map((attendee, index) => (

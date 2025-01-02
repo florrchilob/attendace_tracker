@@ -38,6 +38,9 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 def createattendees(sent: dict):
+    print(sent)
+    if sent == None:
+        return (to_return(400, 101))
     if "attendees" not in sent:
         return to_return(400, 101)
     attendees = sent.get("attendees")
@@ -49,7 +52,7 @@ def createattendees(sent: dict):
     invalid = []
     valid = []
     for attendee in attendees:
-        if not "mispar_ishi" in attendee and not "tehudat_zehut" in attendee:
+        if "mispar_ishi" not in attendee and "tehudat_zehut" not in attendee:
             invalid.append({"attendee": attendee, "error": to_return(400, 102, testing="no_json")})
         elif "full_name" not in attendee:
             invalid.append({"attendee": attendee, "error": to_return(400, 4, testing="no_json")})

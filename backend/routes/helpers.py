@@ -117,11 +117,11 @@ def validating(key, value, type_variable):
                     return (400, 3)
                 if len(value) < 6:
                     return(400, 3)
+                if value[0] == "0":
+                    return(400, 3)
             else:
                 if len(str(value)) < 6:
                     return (400, 3)
-            if value[0] == "0":
-                return(400, 3)
         case "tehudat_zehut":
             if value == None:
                 return (400, 4)

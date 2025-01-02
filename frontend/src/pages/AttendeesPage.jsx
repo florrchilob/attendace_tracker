@@ -177,54 +177,89 @@ const AttendeesPage = () => {
   //     setAttendees(newAttendees);
   //   }
   // };
+  function exportToExcel() {
+    if (!attendees || attendees.length === 0) {
+      alert("אין נתונים לייצוא."); // Mensaje en hebreo
+      return;
+    }
+  
+    const exportData = attendees.map(attendee => ({
+      "מספר אישי": attendee.mispar_ishi || "",
+      "תעודת זהות": attendee.tehudat_zehut || "",
+      "שם מלא": attendee.full_name || "",
+      "נוכחות": attendee.arrived ? "כן" : "לא",
+      "תאריך הגעה": attendee.date_arrived
+        ? formatDate(attendee.date_arrived)
+        : "—"
+    }));
+  
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "משתתפים");
+  
+    // Crear y descargar el archivo Excel
+    XLSX.writeFile(workbook, "רשימת_משתתפים.xlsx");
+  }
+
 
 return (
-  <div
-    dir="rtl"
-    className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
-  >      
-    <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
-        <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
-          רשימת משתתפים
-        </h1>
-        {loading === false &&
-          (
-            <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
-              הגיעו {attendees.length}/{attendees.filter(a => a.arrived).length}
-            </h1>
-          )
-        }
-        {adding ? (
-          <div className="flex items-center space-x-2 transition-all duration-500 flex-row py-auto">
-            <input
-              type="file"
-              accept=".xlsx"
-              onChange={handleImport}
-              className="transition-all duration-400 block my-4 bg-transparent hover:bg-lavanderConvined
-              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-lg p-2 flex-col"
-            />
-            {file &&
-              <button
-                onClick={() => {
-                  setAdding(false);
-                  setFile(null);
-                }}
-                className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3 flex-col my-auto"
-              >
-                ✕
-              </button>
-            }
-          </div>
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-            className="transition-all duration-500 block mb-4 bg-transparent hover:bg-lavanderConvined
-            border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-2"
-          >
-            <AddLogo />
-          </button>
-        )}
-
+    <div
+      dir="rtl"
+      className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
+    >      
+      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
+          <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
+            רשימת משתתפים
+          </h1>
+          
+  
+          {loading === false &&
+            (
+              <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
+                הגיעו {attendees.filter(a => a.arrived).length}/{attendees.length}
+              </h1>
+            )
+          }
+        <div className="flex flex-row justify-between">  
+          {adding ? (
+            <div className="flex items-center space-x-2 transition-all duration-500 flex-row py-auto">
+              <input
+                type="file"
+                accept=".xlsx"
+                onChange={handleImport}
+                className="transition-all duration-400 block my-4 bg-transparent hover:bg-lavanderConvined
+                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-lg p-2 flex-col"
+              />
+              {file &&
+                <button
+                  onClick={() => {
+                    setAdding(false);
+                    setFile(null);
+                  }}
+                  className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3 flex-col my-auto"
+                >
+                  ✕
+                </button>
+              }
+            </div>
+          ) : (
+            <button
+              onClick={() => setAdding(true)}
+              className="transition-all duration-500 block mb-4 bg-transparent hover:bg-lavanderConvined
+              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-2"
+            >
+              <AddLogo />
+            </button>
+          )}
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={exportToExcel}
+                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:bg-greenConvined text-white font-semibold rounded-lg border border-white hover:border-green-500"
+                >
+                  ייצא לאקסל
+                </button>
+              </div>
+        </div>
 
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
         <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">

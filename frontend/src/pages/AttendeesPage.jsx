@@ -5,7 +5,7 @@ import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
 import LoadingIcon from "../components/loading";
 import Swal from "sweetalert2";
-
+import '../App.css'
 // import ErrorPage from "../components/ErrorPage";
 
 const AttendeesPage = () => {
@@ -42,13 +42,48 @@ const AttendeesPage = () => {
     return `${day}/${month}/${year} ${hours}:${minutes}`
   };
 
-  const handleDelete = (index) => {
-    const newAttendees = attendees.filter((_, i) => i !== index);
-    setAttendees(newAttendees);
+  const handleDelete = async() => {
+    let response = await fetch("http://127.0.0.1:8000/attendees/deleteall", {
+      method: 'DELETE',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (response.status === 200) {
+      setAttendees([]);  
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "המשתתפים הוסרו בהצלחה",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup",
+          title: "custom-title-success",
+        },
+      })
+    }
+    else{
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שגיאת שרת פנימית",
+        text: "נסה שוב מאוחר יותר",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title"          
+        },
+      })
+    }
+
   };
 
   const exportErrorsToExcel = (response) => {
-    const missingData = response.data.misssing_data;
+    const missingData = response.data.missing_data;
     
     const formattedData = missingData.map((item) => ({
       "מספר אישי": item.attendee.mispar_ishi || "",
@@ -100,8 +135,8 @@ const AttendeesPage = () => {
         
               } else if (mappedKey === "date_arrived") {
                 if (typeof value === "number") {
-                  const excelEpoch = new Date(1900, 0, 1); // Base: 1 de enero de 1900
-                  const date = new Date(excelEpoch.getTime() + (value - 2) * 86400000); // Corrige el offset
+                  const excelEpoch = new Date(1900, 0, 1);
+                  const date = new Date(excelEpoch.getTime() + (value - 2) * 86400000);
         
                   const formattedDate = date
                     .toISOString()
@@ -112,7 +147,7 @@ const AttendeesPage = () => {
                 } else if (typeof value === "string" && value.includes(" ")) {
                   const dateParts = value.split(" ");
                   const date = dateParts[0].split("/").reverse().join("-");
-                  const time = dateParts[1]; // Hora
+                  const time = dateParts[1];
                   newRow[mappedKey] = `${date} ${time}:00`;
         
                 } else {
@@ -130,7 +165,8 @@ const AttendeesPage = () => {
       })
 
       const toSend = { "attendees": jsonData };
-      let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+      try {
+        let response = await fetch("http://127.0.0.1:8000/attendees/create", {
           method: 'POST',
           headers: {
             'Access-Control-Allow-Origin': '*',
@@ -138,26 +174,58 @@ const AttendeesPage = () => {
           },
           body: JSON.stringify(toSend)
         });
-
-        const dataResponse = await response.json();
-        fetchAttendees()
-        if (response.status != 201){
-          exportErrorsToExcel(dataResponse)
-          alert("בדוק את תיקיית ההורדות שלך עבור קובץ השגיאות שהורד.");
-        }
-        else{
+        if (response.status == 500){
           Swal.fire({
             position: "center",
-            icon: "success",
-            title: "המשתתפים נוספו בהצלחה",
+            icon: "error",
+            title: "שגיאת שרת פנימית",
+            text: "נסה שוב מאוחר יותר",
             showConfirmButton: false,
             timer: 2500,
             customClass: {
-              popup: "custom-popup",
-              title: "custom-title-success",
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"          
             },
           })
         }
+        else{
+          const dataResponse = await response.json();
+          console.log(response["data"]["missing_data"])
+        }
+      } catch (error) {
+          Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"          
+          },
+        })
+      }
+      
+
+        // fetchAttendees()
+        // if (response.status != 201){
+        //   exportErrorsToExcel(dataResponse)
+        //   alert("בדוק את תיקיית ההורדות שלך עבור קובץ השגיאות שהורד.");
+        // }
+        // else{
+        //   Swal.fire({
+        //     position: "center",
+        //     icon: "success",
+        //     title: "המשתתפים נוספו בהצלחה",
+        //     showConfirmButton: false,
+        //     timer: 2500,
+        //     customClass: {
+        //       popup: "custom-popup",
+        //       title: "custom-title-success",
+        //     },
+        //   })
+        // }
       };
       
     fetchAttendees();
@@ -168,18 +236,9 @@ const AttendeesPage = () => {
 
   };
   
-
-  // const handleEdit = (index) => {
-  //   const newName = prompt("Ingrese un nuevo nombre:");
-  //   if (newName) {
-  //     const newAttendees = [...attendees];
-  //     newAttendees[index].full_name = newName;
-  //     setAttendees(newAttendees);
-  //   }
-  // };
   function exportToExcel() {
     if (!attendees || attendees.length === 0) {
-      alert("אין נתונים לייצוא."); // Mensaje en hebreo
+      alert("אין נתונים לייצוא.");
       return;
     }
   
@@ -197,7 +256,6 @@ const AttendeesPage = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "משתתפים");
   
-    // Crear y descargar el archivo Excel
     XLSX.writeFile(workbook, "רשימת_משתתפים.xlsx");
   }
 
@@ -246,19 +304,27 @@ return (
             <button
               onClick={() => setAdding(true)}
               className="transition-all duration-500 block mb-4 bg-transparent hover:bg-lavanderConvined
-              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-2"
+              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full py-2 px-3"
             >
               <AddLogo />
             </button>
           )}
-              <div className="flex justify-end mb-4">
+            <div className="flex flex-row items-center">
+              <button
+                      onClick={() => handleDelete()}
+                      className="py-2 px-4 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger border border-white"
+                      >
+                <GarbageLogo/>
+              </button>
+              <div className="flex justify-end m-4">
                 <button
                   onClick={exportToExcel}
-                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:bg-greenConvined text-white font-semibold rounded-lg border border-white hover:border-green-500"
-                >
+                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
+                  >
                   ייצא לאקסל
                 </button>
               </div>
+            </div>
         </div>
 
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
@@ -270,7 +336,6 @@ return (
               <th className="px-4 py-2 text-center">שם מלא</th>
               <th className="px-4 py-2 text-center">נוכחות</th>
               <th className="px-4 py-2 text-center">תאריך הגעה</th>
-              <th className="py-2 w-1 text-center"></th>
             </tr>
           </thead>
           <tbody>
@@ -302,20 +367,6 @@ return (
                   </td>
                   <td className="px-4 py-2 text-pinkConvined text-lg text-center">
                     {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
-                  </td>
-                  <td className="p-2 flex justify-center">
-                    {/* <button
-                      onClick={() => handleEdit(index)}
-                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-yellowConvined"
-                    >
-                      <EditLogo/>
-                    </button> */}
-                    <button
-                      onClick={() => handleDelete(index)}
-                      className="py-1 px-3 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger"
-                    >
-                      <GarbageLogo/>
-                    </button>
                   </td>
                 </tr>
               ))

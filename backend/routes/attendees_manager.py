@@ -104,7 +104,7 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
                 else:
                     added_tehudat_zehut.append(this_attendee.tehudat_zehut)
     returning = {
-        "misssing_data": invalid,
+        "missing_data": invalid,
         "already_database":{
             "mispar_ishi": already_mispar_ishi,
             "tehudat_zehut": already_tehudat_zehut

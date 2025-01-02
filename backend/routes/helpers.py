@@ -117,7 +117,6 @@ def validating(key, value, type_variable):
                 if len(str(value)) < 6:
                     return (400, 3)
         case "tehudat_zehut":
-            print("aca")
             if value == None:
                 return (400, 4)
             if type_variable == str:

@@ -19,36 +19,36 @@ const AttendeesPage = () => {
   ];
   const [filter, setFilter] = useState({ field: "", value: "" });
   const [sort, setSort] = useState({ field: "", direction: "asc" })
-  // const [socket, setSocket] = useState(null);
+  const [socket, setSocket] = useState(null);
 
-  // useEffect(() => {
-  //   const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+  useEffect(() => {
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws");
 
-  //   ws.onopen = () => {
-  //     console.log("Conectado al servidor WebSocket");
-  //   };
+    ws.onopen = () => {
+      console.log("Conectado al servidor WebSocket");
+    };
 
-  //   ws.onmessage = (event) => {
-  //     const message = JSON.parse(event.data);
-  //     if (message.type === "update") {
-  //       setAttendees(message.data);
-  //     }
-  //   };
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "update") {
+        setAttendees(message.data);
+      }
+    };
 
-  //   ws.onerror = (error) => {
-  //     console.error("Error en WebSocket:", error);
-  //   };
+    ws.onerror = (error) => {
+      console.error("Error en WebSocket:", error);
+    };
 
-  //   ws.onclose = () => {
-  //     console.log("Desconectado del servidor WebSocket");
-  //   };
+    ws.onclose = () => {
+      console.log("Desconectado del servidor WebSocket");
+    };
 
-  //   setSocket(ws);
+    setSocket(ws);
 
-  //   return () => {
-  //     ws.close();
-  //   };
-  // }, []);
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   async function fetchAttendees() {
     try {

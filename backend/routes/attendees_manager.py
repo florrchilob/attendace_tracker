@@ -31,13 +31,34 @@ load_dotenv(dotenv_path)
 
 secret_key=os.getenv("secret_key")
 
+from fastapi import FastAPI, WebSocket
+from typing import List
+
+app = FastAPI()
+
+connected_clients: List[WebSocket] = []
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_clients.append(websocket)
+    try:
+        while True:
+            await asyncio.sleep(10)
+    finally:
+        connected_clients.remove(websocket)
+
+async def send_update(action: str, data: dict):
+    for client in connected_clients:
+        await client.send_json({"action": action, "data": data})
+
 @attendees_route.get("/")
 def home():
     return to_return(200)
 
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
-def createattendees(sent: dict):
+async def createattendees(sent: dict):
     if sent == None:
         return (to_return(400, 101))
     if "attendees" not in sent:
@@ -65,18 +86,19 @@ def createattendees(sent: dict):
                     attendee["date_arrived"] = datetime.strptime(attendee["date_arrived"], "%Y-%m-%d %H:%M:%S")
                 validAttende.create_straight(attendee)
                 valid.append(validAttende)
-    response = logic_create_attendee(valid, invalid, testing)
+    response = await logic_create_attendee(valid, invalid, testing)
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
         return to_return(response[0], response[1], response[2])
 
 #Logic behind the create function
-def logic_create_attendee(validAttendees: list, invalid: List, testing):
+async def logic_create_attendee(validAttendees: list, invalid: List, testing):
     already_mispar_ishi = []
     already_tehudat_zehut = []
     added_mispar_ishi = []
     added_tehudat_zehut = []
+    full_attendees_added = []
     for this_attendee in validAttendees:
         validation = db_validating({"type": 1, "mispar_ishi": this_attendee.mispar_ishi, "tehudat_zehut": this_attendee.tehudat_zehut})
         if validation != True:
@@ -101,6 +123,7 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
             if response_db == "error":
                 return (500, 99)
             else:
+                full_attendees_added.append(this_attendee)
                 date_arrived_json = None
                 if this_attendee.date_arrived:
                     date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
@@ -121,6 +144,7 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
     }
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:
         return (201, 0, returning)
+    await send_update("create", full_attendees_added)
     return (400, 101, returning)
 
 @attendees_route.get("/get")

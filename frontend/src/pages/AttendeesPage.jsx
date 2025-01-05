@@ -21,7 +21,7 @@ const AttendeesPage = () => {
     "תאריך הגעה"
   ];
   const [filter, setFilter] = useState({ field: "", value: "" });
-  const [sort, setSort] = useState({ field: "", direction: "asc" });
+  const [sort, setSort] = useState({ field: "", direction: "asc" }); // Estado para ordenamiento
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const refSearch = useRef(null);
 
@@ -353,25 +353,51 @@ const filteredAttendees = attendees
   .filter((attendee) => {
     if (!filter.field || !filter.value) return true;
 
+    if (filter.field === "arrived") {
+      const arrivedValue = filter.value === "כן" ? true : filter.value === "לא" ? false : null;
+      return attendee.arrived === arrivedValue;
+    }
+
     const value = attendee[filter.field]?.toString().toLowerCase();
     return value && value.includes(filter.value);
   })
   .sort((a, b) => {
     if (!sort.field) return 0;
-    const aValue = a[sort.field] || "";
-    const bValue = b[sort.field] || "";
-    return sort.direction === "asc"
-      ? aValue.localeCompare(bValue)
-      : bValue.localeCompare(aValue);
+    const aValue = a[sort.field]?.toString().toLowerCase() || "";
+    const bValue = b[sort.field]?.toString().toLowerCase() || "";
+
+    if (sort.direction === "asc") {
+      return aValue.localeCompare(bValue);
+    } else {
+      return bValue.localeCompare(aValue);
+    }
   });
 
 
+
   const handleSort = (field) => {
-    setSort((prevSort) => ({
+    setSort((prev) => ({
       field,
-      direction: prevSort.direction === "asc" ? "desc" : "asc",
+      direction: prev.direction === "asc" ? "desc" : "asc", // Alterna entre ascendente y descendente
     }));
   };
+  
+  useEffect(() => {
+    if (filteredAttendees.length === 0 && (filter.field || filter.value)) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "לא נמצאו תוצאות",
+        text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title"
+        },
+      });
+    }
+  }, [filteredAttendees]);
   
 
 return (
@@ -432,45 +458,6 @@ return (
                 }
             </div>
           )}
-          <div className="flex w-full justify-between items-center mx-4">
-            <div className="flex w-full">
-              <div className="flex w-full justify-between">
-                <div className="flex flex-row w-1/2">
-                    <select
-                      onChange={handleFilterFieldChange}
-                      value={filter.field}
-                      className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
-                      >
-                      <option value="">חפש לפי</option>
-                      <option value="mispar_ishi">מספר אישי</option>
-                      <option value="tehudat_zehut">תעודת זהות</option>
-                      <option value="full_name">שם מלא</option>
-                      <option value="arrived">נוכחות</option>
-                      <option value="date_arrived">תאריך הגעה</option>
-                    </select>
-
-                    <input
-                      type="text"
-                      value={filter.value}
-                      onChange={handleFilterChange}
-                      placeholder="הקלד ערך"
-                      className="transition-all duration-400 block bg-gray-700 bg-opacity-70 w-1/3 text-white font-semibold rounded-full p-2 text-center"
-                      />
-                  </div>
-                  <select
-                    onChange={(e) => handleSort(e.target.value)}
-                    className="transition-all w-1/3 duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
-                  >
-                    <option value="">מיין לפי</option>
-                    <option value="mispar_ishi">מספר אישי</option>
-                    <option value="tehudat_zehut">תעודת זהות</option>
-                    <option value="full_name">שם מלא</option>
-                    <option value="date_arrived">תאריך הגעה</option>
-                  </select>
-                </div>
-
-            </div>
-          </div>
           <div className="flex flex-row items-center">
             <div className="flex justify-end">
               <button
@@ -486,6 +473,54 @@ return (
                 className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
                 >
                 ייצא לאקסל
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-row my-5 w-full">
+          <div className="flex w-full justify-center gap-40">
+            <div className="flex flex-row">
+                <select
+                  onChange={handleFilterFieldChange}
+                  value={filter.field}
+                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
+                  >
+                  <option value="">חפש לפי</option>
+                  <option value="mispar_ishi">מספר אישי</option>
+                  <option value="tehudat_zehut">תעודת זהות</option>
+                  <option value="full_name">שם מלא</option>
+                  <option value="arrived">נוכחות</option>
+                  <option value="date_arrived">תאריך הגעה</option>
+                </select>
+
+                <input
+                  type="text"
+                  value={filter.value}
+                  onChange={handleFilterChange}
+                  placeholder="הקלד ערך"
+                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
+                  />
+            </div>
+            <div className="flex flex-row">
+              <select
+                  onChange={(e) => handleSort(e.target.value)}
+                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full mx-2 text-center"
+                  >
+                  <option value="">מיין לפי</option>
+                  <option value="mispar_ishi">מספר אישי</option>
+                  <option value="tehudat_zehut">תעודת זהות</option>
+                  <option value="full_name">שם מלא</option>
+                  <option value="arrived">נוכחות</option>
+                  <option value="date_arrived">תאריך הגעה</option>
+              </select>
+
+              {/* Botón para cambiar asc/desc */}
+              <button
+                onClick={() => setSort((prev) => ({ ...prev, direction: prev.direction === "asc" ? "desc" : "asc" }))}
+                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
+                >
+                {sort.direction === "asc" ? "⬆️" : "⬇️"}
               </button>
             </div>
           </div>

@@ -268,7 +268,25 @@ const AttendeesPage = () => {
     XLSX.writeFile(workbook, "רשימת_משתתפים.xlsx");
   }
 
+  const handleRestartAttendace = async() => {
 
+    try { 
+      const response = await fetch("http://127.0.0.1:8000/attendees/restart", {
+      method: 'PUT',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
+      if(response.status === 500){
+        setLoading(null)
+      }
+    } catch (error) {
+      setLoading(null)
+    } finally {
+      fetchAttendees();
+    }
+  }
 return (
     <div
       dir="rtl"
@@ -310,21 +328,32 @@ return (
               }
             </div>
           ) : (
-            <button
-              onClick={() => setAdding(true)}
-              className="transition-all duration-500 block mb-4 bg-transparent hover:bg-lavanderConvined
-              border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full py-2 px-3"
-            >
-              <AddLogo />
-            </button>
-          )}
-            <div className="flex flex-row items-center">
+            <div className="flex flex-row">
               <button
                       onClick={() => handleDelete()}
-                      className="py-2 px-4 bg-transparent text-white font-semibold rounded-lg hover:border-redConvinedStronger border border-white"
+                      className="transition-all duration-500 block mb-4 bg-transparent hover:bg-redConvinedStronger
+                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-4 me-4"
                       >
                 <GarbageLogo/>
               </button>
+              <button
+                onClick={() => setAdding(true)()}
+                className="transition-all duration-500 block mb-4 bg-transparent hover:bg-pinkConvined
+                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full px-4"
+                >
+                <AddLogo />
+              </button>
+            </div>
+          )}
+            <div className="flex flex-row items-center">
+              <div className="flex justify-end">
+                <button
+                  onClick={handleRestartAttendace}
+                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-lavanderConvined text-lavanderConvined font-semibold rounded-lg border border-white"
+                  >
+                  להפעיל מחדש כניסות                
+                </button>
+              </div>
               <div className="flex justify-end m-4">
                 <button
                   onClick={exportToExcel}

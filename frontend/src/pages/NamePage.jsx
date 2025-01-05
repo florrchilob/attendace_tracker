@@ -8,20 +8,6 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
     const [fullName, setFullName] = useState("")
 
     const handleSubmit = async() => {
-        if (!fullName.trim() || fullName.trim().split(" ").length < 2) {
-            Swal.fire({
-            icon: "error",
-            title: "שגיאה",
-            text: "אנא הכנס שם מלא המכיל לפחות שתי מילים",
-            showConfirmButton: false,
-            timer: 3500,
-            customClass: {
-                popup: "custom-popup",
-                title: "custom-title-error",
-            },
-            });
-            return;
-        }
         const now = new Date();
         const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
           .toISOString()

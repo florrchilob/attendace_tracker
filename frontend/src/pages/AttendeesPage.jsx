@@ -18,10 +18,37 @@ const AttendeesPage = () => {
     "תאריך הגעה"
   ];
   const [filter, setFilter] = useState({ field: "", value: "" });
-  const [sort, setSort] = useState({ field: "", direction: "asc" }); // Estado para ordenamiento
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const refSearch = useRef(null);
+  const [sort, setSort] = useState({ field: "", direction: "asc" })
+  // const [socket, setSocket] = useState(null);
 
+  // useEffect(() => {
+  //   const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+  //   ws.onopen = () => {
+  //     console.log("Conectado al servidor WebSocket");
+  //   };
+
+  //   ws.onmessage = (event) => {
+  //     const message = JSON.parse(event.data);
+  //     if (message.type === "update") {
+  //       setAttendees(message.data);
+  //     }
+  //   };
+
+  //   ws.onerror = (error) => {
+  //     console.error("Error en WebSocket:", error);
+  //   };
+
+  //   ws.onclose = () => {
+  //     console.log("Desconectado del servidor WebSocket");
+  //   };
+
+  //   setSocket(ws);
+
+  //   return () => {
+  //     ws.close();
+  //   };
+  // }, []);
 
   async function fetchAttendees() {
     try {
@@ -393,7 +420,7 @@ const filteredAttendees = attendees
   };
   
   useEffect(() => {
-    if (filteredAttendees.length === 0 && (filter.field || filter.value)) {
+    if (attendees.length > 0 && filteredAttendees.length === 0 && (filter.field || filter.value)) {
       Swal.fire({
         position: "center",
         icon: "warning",

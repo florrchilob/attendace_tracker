@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import EditLogo from "../assets/Logos/EditLogo.Jsx";
@@ -13,6 +13,18 @@ const AttendeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [file, setFile] = useState(null);
+  const titles = [
+    "מספר אישי",
+    "תעודת זהות",
+    "שם מלא",
+    "נוכחות",
+    "תאריך הגעה"
+  ];
+  const [filter, setFilter] = useState({ field: "", value: "" });
+  const [sort, setSort] = useState({ field: "", direction: "asc" });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const refSearch = useRef(null);
+
 
   async function fetchAttendees() {
     try {
@@ -43,43 +55,78 @@ const AttendeesPage = () => {
   };
 
   const handleDelete = async() => {
-    let response = await fetch("http://127.0.0.1:8000/attendees/deleteall", {
-      method: 'DELETE',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
+    Swal.fire({
+      title: "האם ברצונך למחוק את כל המשתתפים?",
+      text: '"delete"' + ' כדי לאשר למחוק כתוב' ,
+      input: "text",
+      inputPlaceholder: '"delete" כתוב  כאן',
+      showCancelButton: true,
+      confirmButtonText: "מחק",
+      cancelButtonText: "ביטול",
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title"
+      },
+      preConfirm: (inputValue) => {
+        if (inputValue !== "delete") {
+          Swal.showValidationMessage('עליך לכתוב "delete" כדי לאשר את המחיקה');
+          return false;
+        }
+        return true;
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        exportToExcel()
+        let response = await fetch("http://127.0.0.1:8000/attendees/deleteall", {
+          method: 'DELETE',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          }
+        });
+    
+        if (response.status === 200) {
+          setAttendees([]);  
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "המשתתפים הוסרו בהצלחה",
+            text: "אם זו הייתה שגיאה, הרשימה המלאה הורדה, הזן אותה שוב",
+            showConfirmButton: false,
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          })
+        }
+        else{
+          Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "שגיאת שרת פנימית",
+            text: "נסה שוב מאוחר יותר",
+            showConfirmButton: false,
+            timer: 2500,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"          
+            },
+          })
+        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        Swal.fire({
+          position: "center",
+          icon: "info",
+          title: "המחיקה בוטלה",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"          
+          },
+        })
       }
     });
-
-    if (response.status === 200) {
-      setAttendees([]);  
-      Swal.fire({
-        position: "center",
-        icon: "success",
-        title: "המשתתפים הוסרו בהצלחה",
-        showConfirmButton: false,
-        timer: 2500,
-        customClass: {
-          popup: "custom-popup",
-          title: "custom-title-success",
-        },
-      })
-    }
-    else{
-      Swal.fire({
-        position: "center",
-        icon: "error",
-        title: "שגיאת שרת פנימית",
-        text: "נסה שוב מאוחר יותר",
-        showConfirmButton: false,
-        timer: 2500,
-        customClass: {
-          popup: "custom-popup-505",
-          title: "custom-popup-505-title"          
-        },
-      })
-    }
-
   };
 
   const exportErrorsToExcel = (missingData) => {
@@ -277,7 +324,7 @@ const AttendeesPage = () => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       }
-    });
+    });  
       if(response.status === 500){
         setLoading(null)
       }
@@ -287,6 +334,46 @@ const AttendeesPage = () => {
       fetchAttendees();
     }
   }
+
+  const handleFilterChange = (e) => {
+    setFilter((prev) => ({ ...prev, value: e.target.value.toLowerCase() }));
+  };
+  
+  const handleFilterFieldChange = (e) => {
+    setFilter((prev) => ({ ...prev, field: e.target.value }));
+  };
+  
+  
+
+useEffect(() => {
+  console.log(file)
+}, [file])
+
+const filteredAttendees = attendees
+  .filter((attendee) => {
+    if (!filter.field || !filter.value) return true;
+
+    const value = attendee[filter.field]?.toString().toLowerCase();
+    return value && value.includes(filter.value);
+  })
+  .sort((a, b) => {
+    if (!sort.field) return 0;
+    const aValue = a[sort.field] || "";
+    const bValue = b[sort.field] || "";
+    return sort.direction === "asc"
+      ? aValue.localeCompare(bValue)
+      : bValue.localeCompare(aValue);
+  });
+
+
+  const handleSort = (field) => {
+    setSort((prevSort) => ({
+      field,
+      direction: prevSort.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+  
+
 return (
     <div
       dir="rtl"
@@ -295,9 +382,7 @@ return (
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
           <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
             רשימת משתתפים
-          </h1>
-          
-  
+          </h1>  
           {loading === false &&
             (
               <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
@@ -306,63 +391,104 @@ return (
             )
           }
         <div className="flex flex-row justify-between">  
-          {adding ? (
+          {!adding ? (
             <div className="flex items-center space-x-2 transition-all duration-500 flex-row py-auto">
+              <div className="flex flex-row">
+                <button
+                        onClick={handleDelete}
+                        className="transition-all duration-500 block mb-4 bg-transparent hover:bg-redConvinedStronger
+                  border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-4 me-4"
+                  >
+                  <GarbageLogo/>
+                </button>
+                <button
+                  onClick={() => {setAdding(true); setFile(true)}}
+                  className="transition-all duration-500 block mb-4 bg-transparent hover:bg-pinkConvined
+                  border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full px-4"
+                  >
+                  <AddLogo />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-row">
               <input
                 type="file"
                 accept=".xlsx"
                 onChange={handleImport}
                 className="transition-all duration-400 block my-4 bg-transparent hover:bg-lavanderConvined
                 border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-lg p-2 flex-col"
-              />
-              {file &&
-                <button
+                />
+              {file === true &&
+                  <button
                   onClick={() => {
                     setAdding(false);
                     setFile(null);
                   }}
                   className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3 flex-col my-auto"
-                >
-                  ✕
-                </button>
-              }
-            </div>
-          ) : (
-            <div className="flex flex-row">
-              <button
-                      onClick={() => handleDelete()}
-                      className="transition-all duration-500 block mb-4 bg-transparent hover:bg-redConvinedStronger
-                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full p-4 me-4"
-                      >
-                <GarbageLogo/>
-              </button>
-              <button
-                onClick={() => setAdding(true)()}
-                className="transition-all duration-500 block mb-4 bg-transparent hover:bg-pinkConvined
-                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-full px-4"
-                >
-                <AddLogo />
-              </button>
+                  >
+                    ✕
+                  </button>
+                }
             </div>
           )}
-            <div className="flex flex-row items-center">
-              <div className="flex justify-end">
-                <button
-                  onClick={handleRestartAttendace}
-                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-lavanderConvined text-lavanderConvined font-semibold rounded-lg border border-white"
+          <div className="flex w-full justify-between items-center mx-4">
+            <div className="flex w-full">
+              <div className="flex w-full justify-between">
+                <div className="flex flex-row w-1/2">
+                    <select
+                      onChange={handleFilterFieldChange}
+                      value={filter.field}
+                      className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
+                      >
+                      <option value="">חפש לפי</option>
+                      <option value="mispar_ishi">מספר אישי</option>
+                      <option value="tehudat_zehut">תעודת זהות</option>
+                      <option value="full_name">שם מלא</option>
+                      <option value="arrived">נוכחות</option>
+                      <option value="date_arrived">תאריך הגעה</option>
+                    </select>
+
+                    <input
+                      type="text"
+                      value={filter.value}
+                      onChange={handleFilterChange}
+                      placeholder="הקלד ערך"
+                      className="transition-all duration-400 block bg-gray-700 bg-opacity-70 w-1/3 text-white font-semibold rounded-full p-2 text-center"
+                      />
+                  </div>
+                  <select
+                    onChange={(e) => handleSort(e.target.value)}
+                    className="transition-all w-1/3 duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
                   >
-                  להפעיל מחדש כניסות                
-                </button>
-              </div>
-              <div className="flex justify-end m-4">
-                <button
-                  onClick={exportToExcel}
-                  className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
-                  >
-                  ייצא לאקסל
-                </button>
-              </div>
+                    <option value="">מיין לפי</option>
+                    <option value="mispar_ishi">מספר אישי</option>
+                    <option value="tehudat_zehut">תעודת זהות</option>
+                    <option value="full_name">שם מלא</option>
+                    <option value="date_arrived">תאריך הגעה</option>
+                  </select>
+                </div>
+
             </div>
+          </div>
+          <div className="flex flex-row items-center">
+            <div className="flex justify-end">
+              <button
+                onClick={handleRestartAttendace}
+                className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-lavanderConvined text-lavanderConvined font-semibold rounded-lg border border-white"
+                >
+                להפעיל מחדש כניסות                
+              </button>
+            </div>
+            <div className="flex justify-end m-4">
+              <button
+                onClick={exportToExcel}
+                className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
+                >
+                ייצא לאקסל
+              </button>
+            </div>
+          </div>
         </div>
 
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
@@ -377,39 +503,31 @@ return (
             </tr>
           </thead>
           <tbody>
-            {loading === true ? (
-              <tr>
-                <td colSpan="6" className="text-center py-10">
-                  <div className="flex justify-center items-center mx-auto">
-                    <LoadingIcon />
-                  </div>
+            {filteredAttendees.map((attendee, index) => (
+              <tr
+                key={index}
+                className="border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
+              >
+                <td className="px-4 py-2 text-limeConvined text-lg text-center">
+                  {attendee.mispar_ishi}
+                </td>
+                <td className="px-4 py-2 text-turquiseConvined text-lg text-center">
+                  {attendee.tehudat_zehut}
+                </td>
+                <td className="px-4 py-2 text-greenConvined text-lg text-center">
+                  {attendee.full_name}
+                </td>
+                <td className="px-4 py-2 text-lavanderConvined text-lg text-center">
+                  {attendee.arrived ? "כן" : "לא"}
+                </td>
+                <td className="px-4 py-2 text-pinkConvined text-lg text-center">
+                  {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
                 </td>
               </tr>
-            ) : loading === null ? (
-              <tr className="h-60">
-                <td>
-                  <div className="flex justify-center items-center mx-auto flex-col">
-                    <h4 className="text-4xl font-bold text-center mb-[-80px] text-white justify-center flex flex-col"> מצטערים יש לנו תקלה כרגע נה לנשות שוב מאוחר יותר</h4>
-                    {/* <ErrorPage /> */}
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              Array.isArray(attendees) && attendees.map((attendee, index) => (
-                <tr key={index} className="border-b bg-gray-800 border-gray-600 hover:bg-gray-600">
-                  <td className="px-4 py-2 text-limeConvined text-lg text-center">{attendee.mispar_ishi}</td>
-                  <td className="px-4 py-2 text-turquiseConvined text-lg text-center">{attendee.tehudat_zehut}</td>
-                  <td className="px-4 py-2 text-greenConvined text-lg text-center">{attendee.full_name}</td>
-                  <td className="px-4 py-2 text-lavanderConvined text-lg text-center">
-                    {attendee.arrived ? "כן" : "לא"}
-                  </td>
-                  <td className="px-4 py-2 text-pinkConvined text-lg text-center">
-                    {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
+
+
         </table>
       </div>
     </div>

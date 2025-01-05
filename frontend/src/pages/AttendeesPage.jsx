@@ -2,11 +2,8 @@ import * as XLSX from "xlsx";
 import React, { useEffect, useRef, useState } from "react";
 import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
-import EditLogo from "../assets/Logos/EditLogo.Jsx";
-import LoadingIcon from "../components/loading";
 import Swal from "sweetalert2";
 import '../App.css'
-// import ErrorPage from "../components/ErrorPage";
 
 const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([]);
@@ -147,6 +144,18 @@ const AttendeesPage = () => {
   };
 
   const handleImport = async(e) => {
+    Swal.fire({
+      title: "טוען...",
+      html: "אנא המתן בזמן שהנתונים נטענים.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+      customClass: {
+        popup: "custom-popup",
+        title: "custom-title-success",
+      },
+    });
     setFile(true);
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -219,6 +228,7 @@ const AttendeesPage = () => {
         body: JSON.stringify(toSend)
       })
       .then(response => {
+        Swal.close();
         if (response.status === 500) {
           Swal.fire({
             position: "center",
@@ -480,51 +490,57 @@ return (
 
         <div className="flex flex-row my-5 w-full">
           <div className="flex w-full justify-center gap-40">
-            <div className="flex flex-row">
-                <select
-                  onChange={handleFilterFieldChange}
-                  value={filter.field}
-                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
-                  >
-                  <option value="">חפש לפי</option>
-                  <option value="mispar_ishi">מספר אישי</option>
-                  <option value="tehudat_zehut">תעודת זהות</option>
-                  <option value="full_name">שם מלא</option>
-                  <option value="arrived">נוכחות</option>
-                  <option value="date_arrived">תאריך הגעה</option>
-                </select>
-
-                <input
-                  type="text"
-                  value={filter.value}
-                  onChange={handleFilterChange}
-                  placeholder="הקלד ערך"
-                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
-                  />
-            </div>
-            <div className="flex flex-row">
+            <div className="flex flex-row border-none hover:border-orangeConvined rounded-full">
               <select
-                  onChange={(e) => handleSort(e.target.value)}
-                  className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full mx-2 text-center"
-                  >
-                  <option value="">מיין לפי</option>
-                  <option value="mispar_ishi">מספר אישי</option>
-                  <option value="tehudat_zehut">תעודת זהות</option>
-                  <option value="full_name">שם מלא</option>
-                  <option value="arrived">נוכחות</option>
-                  <option value="date_arrived">תאריך הגעה</option>
+                onChange={handleFilterFieldChange}
+                value={filter.field}
+                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
+              >
+                <option value="">חפש לפי</option>
+                <option value="mispar_ishi">מספר אישי</option>
+                <option value="tehudat_zehut">תעודת זהות</option>
+                <option value="full_name">שם מלא</option>
+                <option value="arrived">נוכחות</option>
+                <option value="date_arrived">תאריך הגעה</option>
               </select>
 
-              {/* Botón para cambiar asc/desc */}
+              <input
+                type="text"
+                value={filter.value}
+                onChange={handleFilterChange}
+                placeholder="הקלד ערך"
+                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
+              />
+            </div>
+
+            <div className="flex flex-row border-none hover:border-orangeConvined rounded-full">
+              <select
+                onChange={(e) => handleSort(e.target.value)}
+                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full mx-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
+              >
+                <option value="">מיין לפי</option>
+                <option value="mispar_ishi">מספר אישי</option>
+                <option value="tehudat_zehut">תעודת זהות</option>
+                <option value="full_name">שם מלא</option>
+                <option value="arrived">נוכחות</option>
+                <option value="date_arrived">תאריך הגעה</option>
+              </select>
               <button
-                onClick={() => setSort((prev) => ({ ...prev, direction: prev.direction === "asc" ? "desc" : "asc" }))}
-                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center"
-                >
-                {sort.direction === "asc" ? "⬆️" : "⬇️"}
+                onClick={() =>
+                  setSort((prev) => ({
+                    ...prev,
+                    direction: prev.direction === "asc" ? "desc" : "asc",
+                  }))
+                }
+                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orange-500 w-24  items-center justify-center"
+              >
+                {sort.direction === "asc" ? "סדר עולה" : "סדר יורד"}
               </button>
+
             </div>
           </div>
         </div>
+
 
       <div className="overflow-y-auto max-h-[500px] rounded-lg">
         <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">

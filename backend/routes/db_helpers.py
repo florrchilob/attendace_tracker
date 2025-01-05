@@ -176,6 +176,7 @@ def db_updating(to_update):
                     conditions.append(column == value)
         values = to_update.get("values")
         query = table.update().where(and_(*conditions)).values(**values)
+
         response = session.execute(query)
         try:
             if response.rowcount >= 1:

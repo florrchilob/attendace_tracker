@@ -47,13 +47,13 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
         const statusCode = response.status
         const errorCode = data.error_code
         if (statusCode == 201){
-            const hours = now.getHours();
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const formattedTime = hours+":"+minutes
+            const attendee = data["data"]["successfull"][formattedOption][0]
+            const dateArrived = attendee["date_arrived"]
+            const fullName = attendee["full_name"]
             Swal.fire({
                 position: "center",
                 icon: "success",
-                title: `<div dir="rtl" style="text-align: center;">ההגעה של ${fullName} נרשמה בהצלחה ב${formattedTime}</div>`,
+                title: `<div dir="rtl" style="text-align: center;">ההגעה של ${fullName} נרשמה בהצלחה ב${dateArrived}</div>`,
                 showConfirmButton: false,
                 timer: 2500,
                 customClass: {

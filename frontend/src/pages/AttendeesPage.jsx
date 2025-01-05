@@ -185,7 +185,7 @@ const AttendeesPage = () => {
               title: "custom-popup-505-title"
             },
           });
-          throw new Error("Server error 500"); // Detener la ejecución
+          throw new Error("Server error 500");
         }
         return response.json();
       })
@@ -235,27 +235,6 @@ const AttendeesPage = () => {
           },
         });
       });
-      
-      
-
-        // fetchAttendees()
-        // if (response.status != 201){
-        //   exportErrorsToExcel(dataResponse)
-        //   alert("בדוק את תיקיית ההורדות שלך עבור קובץ השגיאות שהורד.");
-        // }
-        // else{
-        //   Swal.fire({
-        //     position: "center",
-        //     icon: "success",
-        //     title: "המשתתפים נוספו בהצלחה",
-        //     showConfirmButton: false,
-        //     timer: 2500,
-        //     customClass: {
-        //       popup: "custom-popup",
-        //       title: "custom-title-success",
-        //     },
-        //   })
-        // }
       };
       
     fetchAttendees();

@@ -92,6 +92,8 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
         else:
             db_open_session()
             if testing != "Ok" and testing != "zeros":
+                if this_attendee.arrived:
+                    this_attendee.date_arrived = datetime.now()
                 response_db = db_saving(this_attendee, attendees, testing)
             else:
                 response_db = True
@@ -99,10 +101,13 @@ def logic_create_attendee(validAttendees: list, invalid: List, testing):
             if response_db == "error":
                 return (500, 99)
             else:
+                date_arrived_json = None
+                if this_attendee.date_arrived:
+                    date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
                 if this_attendee.mispar_ishi:
-                    added_mispar_ishi.append(this_attendee.mispar_ishi)
+                    added_mispar_ishi.append({"id":this_attendee.mispar_ishi, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
                 else:
-                    added_tehudat_zehut.append(this_attendee.tehudat_zehut)
+                    added_tehudat_zehut.append({"id":this_attendee.tehudat_zehut, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
     returning = {
         "missing_data": invalid,
         "already_database":{
@@ -201,7 +206,10 @@ def attendee_arrived(sent: dict, testing: str = None):
         attendee = Attendee()
         attendee.create_straight(sent)
         response = logic_attendee_arrived(attendee, testing)
-        return to_return(response[0], response[1])
+        if len(response) == 3:
+            return to_return(response[0], response[1], response[2])
+        else:
+            return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
 def logic_attendee_arrived(attendee: Attendee, testing: str = None):
@@ -217,7 +225,12 @@ def logic_attendee_arrived(attendee: Attendee, testing: str = None):
         return (500, 99)
     if response != True:
         return (500, 9)
-    return (200, 0)
+    response = db_getting({"type": 2, "table": attendees, "values":["full_name", "date_arrived"], "conditionals": {"id": db_validation.id}})
+    if response == "error" or response == []:
+        return (500, 99)
+    row_dict = response[0]._asdict()
+    row_dict["date_arrived"] = row_dict["date_arrived"].strftime("%H:%M")
+    return (200, 0, row_dict)
 
 @attendees_route.put("/restart")
 def restart_attendace():

@@ -52,7 +52,6 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
         stringInputID = stringInputID.slice(1)
       }
       const attendee = {[formattedOption]: stringInputID}
-      console.log(attendee)
       const  response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
         method:'PUT',
                 headers: {
@@ -66,16 +65,13 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
       const statusCode = response.status
       const errorCode = data.error_code
       if (statusCode == 200){
-        const now = new Date()
-        const hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const formattedTime = hours+":"+minutes
+        const fullName = data['data']['full_name']
+        const formattedTime = data['data']['date_arrived']
         Swal.fire({
           position: "center",
           icon: "success",
-          title: "הגעה נרשמה בהצלחה ב-" + formattedTime,
+          title: `<div dir="rtl" style="text-align: center;">ההגעה של ${fullName} נרשמה בהצלחה ב${formattedTime}</div>`,
           showConfirmButton: false,
-          timer: 2500,
           customClass: {
             popup: "custom-popup",
             title: "custom-title-success",

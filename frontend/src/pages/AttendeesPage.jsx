@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { io } from "socket.io-client";
 import React, { useEffect, useRef, useState } from "react";
 import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
@@ -22,11 +23,34 @@ const AttendeesPage = () => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws");
-    socket.onopen = () => console.log("Conectado");
-    socket.onmessage = (event) => console.log("Mensaje recibido: ", event.data);
-    socket.onclose = () => console.log("Desconectado");
+    const socket = new WebSocket("ws://localhost:8000/ws"); // URL del WebSocket
+  
+    // Evento cuando se abre la conexión
+    socket.onopen = () => {
+      console.log("Conectado al WebSocket");
+    };
+  
+    // Manejar mensajes recibidos
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "update") {
+        setAttendees((prev) => [...prev, ...message.data]); // Agregar nuevos asistentes
+      }
+    };
+  
+    // Manejar errores
+    socket.onerror = (error) => {
+      console.error("Error en el WebSocket:", error);
+    };
+  
+    // Manejar cierre de conexión
+    socket.onclose = () => {
+      console.log("Conexión cerrada");
+    };
+  
+    return () => socket.close();
   }, []);
+  
 
   async function fetchAttendees() {
     try {

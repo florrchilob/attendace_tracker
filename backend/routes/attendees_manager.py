@@ -1,4 +1,5 @@
 #Imports
+import asyncio
 from fastapi import APIRouter, status, FastAPI, WebSocket
 import logging
 from typing import List
@@ -36,21 +37,26 @@ from typing import List
 
 app = FastAPI()
 
+# Lista para conexiones WebSocket abiertas
 connected_clients: List[WebSocket] = []
 
-@app.websocket("/ws")
+@app.websocket("/ws")  # Ruta WebSocket
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+    await websocket.accept()  # Acepta la conexión
     connected_clients.append(websocket)
+
     try:
         while True:
-            await asyncio.sleep(10)
+            await websocket.receive_text()  # Mantener la conexión viva
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
-        connected_clients.remove(websocket)
+        connected_clients.remove(websocket)  # Elimina al cliente si se desconecta
 
-async def send_update(action: str, data: dict):
+# Función para enviar actualizaciones
+async def send_update(attendees):
     for client in connected_clients:
-        await client.send_json({"action": action, "data": data})
+        await client.send_json({"type": "update", "data": attendees})
 
 @attendees_route.get("/")
 def home():

@@ -22,32 +22,29 @@ const AttendeesPage = () => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+    const socket = new WebSocket("ws://localhost:8000/ws");
 
-    ws.onopen = () => {
-      console.log("Conectado al servidor WebSocket");
+    // Abrir conexión
+    socket.onopen = () => {
+      console.log("Conectado al WebSocket");
+      socket.send("Hola desde el cliente");
     };
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === "update") {
-        setAttendees(message.data);
-      }
+    // Recibir mensajes
+    socket.onmessage = (event) => {
+      console.log("Mensaje recibido:", event.data);
     };
 
-    ws.onerror = (error) => {
+    // Manejar errores
+    socket.onerror = (error) => {
       console.error("Error en WebSocket:", error);
     };
 
-    ws.onclose = () => {
-      console.log("Desconectado del servidor WebSocket");
+    // Cerrar conexión
+    socket.onclose = () => {
+      console.log("Conexión cerrada");
     };
 
-    setSocket(ws);
-
-    return () => {
-      ws.close();
-    };
   }, []);
 
   async function fetchAttendees() {

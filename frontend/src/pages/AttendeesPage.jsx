@@ -23,28 +23,9 @@ const AttendeesPage = () => {
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:8000/ws");
-
-    // Abrir conexión
-    socket.onopen = () => {
-      console.log("Conectado al WebSocket");
-      socket.send("Hola desde el cliente");
-    };
-
-    // Recibir mensajes
-    socket.onmessage = (event) => {
-      console.log("Mensaje recibido:", event.data);
-    };
-
-    // Manejar errores
-    socket.onerror = (error) => {
-      console.error("Error en WebSocket:", error);
-    };
-
-    // Cerrar conexión
-    socket.onclose = () => {
-      console.log("Conexión cerrada");
-    };
-
+    socket.onopen = () => console.log("Conectado");
+    socket.onmessage = (event) => console.log("Mensaje recibido: ", event.data);
+    socket.onclose = () => console.log("Desconectado");
   }, []);
 
   async function fetchAttendees() {

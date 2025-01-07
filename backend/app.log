@@ -1479,3 +1479,19 @@
 [2023-12-04 16:10:25,965] - INFO - An application was received in the home page. Endpoint: /meetings/save
 [2024-12-15 12:08:03,223] - INFO - An application was received in the home page. Endpoint: /
 [2025-01-06 10:10:03,633] - INFO - An application was received in the home page. Endpoint: /
+[2025-01-07 11:28:19,303] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:28:34,132] - INFO - Cliente conectado al WebSocket.
+[2025-01-07 11:30:23,760] - ERROR - Error en WebSocket: (1012, None)
+[2025-01-07 11:30:23,925] - INFO - Aplicación cerrada correctamente.
+[2025-01-07 11:30:25,162] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:30:25,242] - INFO - Aplicación cerrada correctamente.
+[2025-01-07 11:30:26,385] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:31:01,404] - INFO - Aplicación cerrada correctamente.
+[2025-01-07 11:31:19,241] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:32:57,370] - INFO - Cliente conectado al WebSocket.
+[2025-01-07 11:33:59,492] - ERROR - Error en WebSocket: (1012, None)
+[2025-01-07 11:33:59,592] - INFO - Aplicación cerrada correctamente.
+[2025-01-07 11:34:01,414] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:34:45,515] - INFO - Aplicación cerrada correctamente.
+[2025-01-07 11:34:48,548] - INFO - Aplicación iniciada correctamente.
+[2025-01-07 11:36:29,431] - INFO - Cliente conectado al WebSocket.

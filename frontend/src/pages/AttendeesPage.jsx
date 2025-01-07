@@ -20,35 +20,43 @@ const AttendeesPage = () => {
   ];
   const [filter, setFilter] = useState({ field: "", value: "" });
   const [sort, setSort] = useState({ field: "", direction: "asc" })
-  const [socket, setSocket] = useState(null);
-
+  
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws"); // URL del WebSocket
-  
-    // Evento cuando se abre la conexión
-    socket.onopen = () => {
-      console.log("Conectado al WebSocket");
+    // Conectar al servidor Socket.IO
+    const socket = io("http://localhost:8000", {
+      transports: ["polling", "websocket"],
+    });
+    
+    socket.on("connect", () => {
+      console.log("Conectado al servidor");
+    });
+    
+    socket.on("connect_error", (err) => {
+      console.error("Error de conexión:", err);
+    });
+
+    // Evento: Actualizaciones de asistentes
+    socket.on("update", (message) => {
+      console.log("Actualización recibida:", message.data);
+
+      // Actualizar lista de asistentes
+      setAttendees((prev) => {
+        const ids = new Map(prev.map((attendee) => [attendee.id, attendee])); // Mapa de asistentes actuales
+        message.data.forEach((a) => ids.set(a.id, a)); // Actualizar o agregar nuevos
+        return Array.from(ids.values()); // Convertir de nuevo a lista
+      });
+    });
+
+    // Evento: Error de conexión
+    socket.on("connect_error", (err) => {
+      console.error("Error de conexión:", err);
+    });
+
+    // Desconectar al desmontar el componente
+    return () => {
+      socket.disconnect();
+      console.log("Desconectado del servidor");
     };
-  
-    // Manejar mensajes recibidos
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === "update") {
-        setAttendees((prev) => [...prev, ...message.data]); // Agregar nuevos asistentes
-      }
-    };
-  
-    // Manejar errores
-    socket.onerror = (error) => {
-      console.error("Error en el WebSocket:", error);
-    };
-  
-    // Manejar cierre de conexión
-    socket.onclose = () => {
-      console.log("Conexión cerrada");
-    };
-  
-    return () => socket.close();
   }, []);
   
 

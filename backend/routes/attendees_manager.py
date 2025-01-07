@@ -35,9 +35,18 @@ secret_key=os.getenv("secret_key")
 
 app = FastAPI()
 
+socket_manager = SocketManager(app=app, mount_location="/socket.io")
+
 @attendees_route.get("/")
 def home():
     return to_return(200)
+
+async def send_create(data):
+        try:
+            print("aca")
+            await socket_manager.emit('create', data)
+        except Exception as e:
+            logging.error(f"Error al enviar mensaje: {e}")
 
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
@@ -74,6 +83,7 @@ async def createattendees(sent: dict):
         return to_return(response[0], response[1]) 
     else:
         return to_return(response[0], response[1], response[2])
+    
 
 #Logic behind the create function
 async def logic_create_attendee(validAttendees: list, invalid: List, testing):
@@ -126,8 +136,8 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
         }
     }
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:
+        await send_create(full_attendees_added)
         return (201, 0, returning)
-    await send_update("create", full_attendees_added)
     return (400, 101, returning)
 
 @attendees_route.get("/get")

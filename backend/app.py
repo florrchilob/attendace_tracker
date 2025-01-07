@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
-from fastapi_socketio import SocketManager  # Asegúrate de instalar fastapi-socketio
+from fastapi_socketio import SocketManager
 from routes.attendees_manager import attendees_route
 
 

@@ -22,41 +22,26 @@ const AttendeesPage = () => {
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
   useEffect(() => {
-    // Conectar al servidor Socket.IO
     const socket = io("http://localhost:8000", {
-      transports: ["polling", "websocket"],
+      transports: ["websocket", "polling"],
+      withCredentials: true,
     });
     
     socket.on("connect", () => {
-      console.log("Conectado al servidor");
+      console.log("Conectado al servidor Socket.IO");
     });
     
     socket.on("connect_error", (err) => {
       console.error("Error de conexión:", err);
     });
 
-    // Evento: Actualizaciones de asistentes
-    socket.on("update", (message) => {
-      console.log("Actualización recibida:", message.data);
-
-      // Actualizar lista de asistentes
-      setAttendees((prev) => {
-        const ids = new Map(prev.map((attendee) => [attendee.id, attendee])); // Mapa de asistentes actuales
-        message.data.forEach((a) => ids.set(a.id, a)); // Actualizar o agregar nuevos
-        return Array.from(ids.values()); // Convertir de nuevo a lista
-      });
-    });
-
-    // Evento: Error de conexión
-    socket.on("connect_error", (err) => {
-      console.error("Error de conexión:", err);
-    });
-
-    // Desconectar al desmontar el componente
+    fetchAttendees();
+    
     return () => {
       socket.disconnect();
       console.log("Desconectado del servidor");
     };
+
   }, []);
   
 
@@ -72,10 +57,7 @@ const AttendeesPage = () => {
       setLoading(false);
     }
   }
-  
-  useEffect(() => {
-    fetchAttendees();
-  }, []);
+
   
   const formatDate = (isoString) => {
     const date = new Date(isoString)
@@ -390,12 +372,6 @@ const AttendeesPage = () => {
     setFilter((prev) => ({ ...prev, field: e.target.value }));
   };
   
-  
-
-useEffect(() => {
-  console.log(file)
-}, [file])
-
 const filteredAttendees = attendees
   .filter((attendee) => {
     if (!filter.field || !filter.value) return true;

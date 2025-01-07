@@ -16,7 +16,7 @@ import jwt
 import os
 
 
-#Log manage
+#Log manager
 logging.basicConfig(level=logging.INFO)
 file_handler = logging.FileHandler('app.log')
 file_handler.setLevel(logging.INFO)

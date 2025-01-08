@@ -42,11 +42,11 @@ def home():
     return to_return(200)
 
 async def send_create(data):
-        try:
-            print("aca")
-            await socket_manager.emit('create', data)
-        except Exception as e:
-            logging.error(f"Error al enviar mensaje: {e}")
+    try:
+        await socket_manager.emit('create', {"message": "Hello from server!"})
+        print(f"Evento 'create' emitido con datos: 'abc'")
+    except Exception as e:
+        print(f"Error al emitir evento: {e}")
 
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import TypingGif from '../assets/gifs/Typing.gif'
+import TypingGif from '../assets/animations/Typing.gif'
 import Swal from "sweetalert2";
 import '../App.css'
 

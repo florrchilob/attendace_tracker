@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import TypingGif from '../assets/gifs/Typing.gif'
-import ScanningGif from '../assets/gifs/Scanning.gif'
+import TypingGif from '../assets/animations/Typing.gif'
+import ScanningGif from '../assets/animations/Scanning.gif'
 import Swal from 'sweetalert2';
 import '../App.css'
 

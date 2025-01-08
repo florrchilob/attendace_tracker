@@ -35,7 +35,7 @@ const AttendeesPage = () => {
       console.error("Error de conexión:", err);
     });
 
-    socket.on("create", () => {
+    socket.on("create", (data) => {
       console.error("aca creado");
     });
 

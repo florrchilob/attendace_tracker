@@ -75,7 +75,7 @@ def test_create_attendees_invalid_attendee():
     invalid_attendee = [{"mispar_ishi": "12345"}]
     status, data = create_attendees(sent={"attendees": invalid_attendee})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 
 def test_create_attendees_duplicate_attendee():
@@ -89,25 +89,25 @@ def test_create_attendees_missing_name():
     attendee_no_name = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789"}]
     status, data = create_attendees(sent={"attendees": attendee_no_name})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_name():
     invalid_name = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789", "full_name": "J0hn D0e!"}]
     status, data = create_attendees(sent={"attendees": invalid_name})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 1
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 1
 
 def test_create_attendees_invalid_mispar_ishi():
     invalid_mispar_ishi = [{"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_tehudat_zehut():
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "12345678", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_mixed_valid_and_invalid(random_data_create):
     random_mispar_ishi, random_tehudat_zehut = random_data_create
@@ -117,7 +117,7 @@ def test_create_attendees_mixed_valid_and_invalid(random_data_create):
     ]
     status, data = create_attendees(sent={"attendees": mixed_attendees})
     assert status == 201
-    assert len(data["data"]["misssing_data"]) == 1
+    assert len(data["data"]["missing_data"]) == 1
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
 
 def test_create_attendees_large_input(random_data_create):
@@ -132,95 +132,95 @@ def test_create_attendees_invalid_mispar_ishi_leading_zeros(random_data_create):
     invalid_mispar_ishi = [{"mispar_ishi": "00123", "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_tehudat_zehut_leading_zeros():
     # tehudat_zehut is passed as a string to preserve the leading zeros
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "001234567", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut, "testing":"zeros"})
     assert status == 201
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_mispar_ishi_too_few_digits():
     invalid_mispar_ishi = [{"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_tehudat_zehut_too_few_digits():
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "12345678", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_tehudat_zehut_too_many_digits():
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789012", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_mispar_ishi_leading_zeros():
     # mispar_ishi is passed as a string to preserve the leading zeros
     invalid_mispar_ishi = [{"mispar_ishi": "00123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_tehudat_zehut_leading_zeros():
     # tehudat_zehut is passed as a string to preserve the leading zeros
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "00123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_mispar_ishi_too_few_digits():
     # mispar_ishi has too few digits (3 digits)
     invalid_mispar_ishi = [{"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_tehudat_zehut_too_few_digits():
     # tehudat_zehut has too few digits (8 digits)
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "12345678", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_tehudat_zehut_too_many_digits():
     # tehudat_zehut has too many digits (12 digits)
     invalid_tehudat_zehut = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789012", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_tehudat_zehut})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
 
 def test_create_attendees_invalid_mispar_ishi_invalid_characters():
     # mispar_ishi has invalid characters (alphabetical)
     invalid_mispar_ishi = [{"mispar_ishi": "ABC123456", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
     status, data = create_attendees(sent={"attendees": invalid_mispar_ishi})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 3
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 def test_create_attendees_invalid_date_format(random_data_create):
     mispar_ishi, tehudat_zehut = random_data_create
     invalid_date_attendee = [{"mispar_ishi": mispar_ishi, "tehudat_zehut": tehudat_zehut, "full_name": "John Doe", "date_arrived": "2023-13-32"}]
     status, data = create_attendees(sent={"attendees": invalid_date_attendee})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 5
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 5
 
 def test_create_attendees_invalid_date_type(random_data_create):
     mispar_ishi, tehudat_zehut = random_data_create
     invalid_date_type = [{"mispar_ishi": mispar_ishi, "tehudat_zehut": tehudat_zehut, "full_name": "John Doe", "date_arrived": 123456789}]
     status, data = create_attendees(sent={"attendees": invalid_date_type})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 5
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 5
 
 def test_create_attendees_null_date(random_data_create):
     mispar_ishi, tehudat_zehut = random_data_create
     null_date = [{"mispar_ishi": mispar_ishi, "tehudat_zehut": tehudat_zehut, "full_name": "John Doe", "date_arrived": None}]
     status, data = create_attendees(sent={"attendees": null_date})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 5
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 5
 
 def test_create_attendees_valid_date(random_data_create):
     mispar_ishi, tehudat_zehut = random_data_create
@@ -248,7 +248,7 @@ def test_create_attendees_invalid_arrived(random_data_create):
     invalid_arrived = [{"mispar_ishi": mispar_ishi, "tehudat_zehut": tehudat_zehut, "full_name": "John Doe", "arrived": "yes"}]
     status, data = create_attendees(sent={"attendees": invalid_arrived})
     assert status == 400
-    assert data["data"]["misssing_data"][0]["error"]["error_code"] == 101  # Valor inválido
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 101  # Valor inválido
 
 def test_create_attendees_valid_attendee(random_data_create):
     random_mispar_ishi, random_tehudat_zehut = random_data_create
@@ -267,6 +267,6 @@ def test_create_attendees_invalid_combined_fields():
     }]
     status, data = create_attendees(sent={"attendees": invalid_combined})
     assert status == 400
-    assert len(data["data"]["misssing_data"]) == 1
-    errors = data["data"]["misssing_data"][0]["error"]
+    assert len(data["data"]["missing_data"]) == 1
+    errors = data["data"]["missing_data"][0]["error"]
     assert errors["error_code"] == 3

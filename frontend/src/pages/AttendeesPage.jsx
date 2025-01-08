@@ -22,30 +22,17 @@ const AttendeesPage = () => {
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
   useEffect(() => {
-    const socket = io("http://localhost:8000", {
-      transports: ["websocket", "polling"],
-      withCredentials: true,
-    });
+    const eventSource = new EventSource("http://localhost:8000/attendees/clients");
+  
+      eventSource.onmessage = (event) => {
+        console.log("recibi "+ event.data);
+      };
     
-    socket.on("connect", () => {
-      console.log("Conectado al servidor Socket.IO");
-    });
-    
-    socket.on("connect_error", (err) => {
-      console.error("Error de conexión:", err);
-    });
-
-    socket.on("create", (data) => {
-      console.error("aca creado");
-    });
-
     fetchAttendees();
-    
-    return () => {
-      socket.disconnect();
-      console.log("Desconectado del servidor");
-    };
-
+  
+      return () => {
+        eventSource.close();
+      };
   }, []);
   
 

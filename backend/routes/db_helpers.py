@@ -86,9 +86,7 @@ def db_saving(to_save, table, testing = None):
     try:
         if response.rowcount >= 1:
             session.commit()
-            if testing == "id":
-                return response.lastrowid
-            return True
+            return response.lastrowid
         return False
     except:
         session.rollback()

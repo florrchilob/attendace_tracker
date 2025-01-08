@@ -1,8 +1,8 @@
 #Imports
 from fastapi import APIRouter, status, FastAPI
 import asyncio
-from fastapi_socketio import SocketManager
 import logging
+from fastapi.responses import StreamingResponse
 from typing import List
 from schemas.attendee import Attendee
 from routes.helpers import to_return, sends_validate
@@ -35,18 +35,27 @@ secret_key=os.getenv("secret_key")
 
 app = FastAPI()
 
-socket_manager = SocketManager(app=app, mount_location="/socket.io")
+active_connections: List[asyncio.Queue] = []
+
+@attendees_route.get("/clients")
+async def get_clients():
+    queue = asyncio.Queue()
+    active_connections.append(queue)
+
+    async def event_stream():
+        try:
+            while True:
+                message = await queue.get()
+                print("envie bien, creo, " + message)
+                yield f"data: {message}\n\n"
+        except asyncio.CancelledError:
+            print("error ")
+            active_connections.remove(queue)
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 @attendees_route.get("/")
 def home():
     return to_return(200)
-
-async def send_create(data):
-    try:
-        await socket_manager.emit('create', {"message": "Hello from server!"})
-        print(f"Evento 'create' emitido con datos: 'abc'")
-    except Exception as e:
-        print(f"Error al emitir evento: {e}")
 
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
@@ -110,20 +119,21 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
                 if this_attendee.arrived:
                     this_attendee.date_arrived = datetime.now()
                 response_db = db_saving(this_attendee, attendees, testing)
+                if response_db == "error":
+                    return (500, 99)
+                this_attendee.id = response_db
+                full_attendees_added.append(this_attendee)
             else:
                 response_db = True
             db_close_session() 
-            if response_db == "error":
-                return (500, 99)
+            full_attendees_added.append(this_attendee)
+            date_arrived_json = None
+            if this_attendee.date_arrived:
+                date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
+            if this_attendee.mispar_ishi:
+                added_mispar_ishi.append({"id":this_attendee.mispar_ishi, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
             else:
-                full_attendees_added.append(this_attendee)
-                date_arrived_json = None
-                if this_attendee.date_arrived:
-                    date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
-                if this_attendee.mispar_ishi:
-                    added_mispar_ishi.append({"id":this_attendee.mispar_ishi, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
-                else:
-                    added_tehudat_zehut.append({"id":this_attendee.tehudat_zehut, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
+                added_tehudat_zehut.append({"id":this_attendee.tehudat_zehut, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
     returning = {
         "missing_data": invalid,
         "already_database":{
@@ -135,8 +145,9 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
             "tehudat_zehut": added_tehudat_zehut
         }
     }
-    if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:
-        await send_create(full_attendees_added)
+    if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:      
+        for queue in active_connections:
+            await queue.put("hola se mando")
         return (201, 0, returning)
     return (400, 101, returning)
 

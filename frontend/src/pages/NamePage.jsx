@@ -7,6 +7,8 @@ import '../App.css'
 function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
     const [fullName, setFullName] = useState("")
 
+    const apiUrl = process.env.REACT_APP_API_URL + '/attendees';
+
     const handleSubmit = async() => {
         const now = new Date();
         const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
@@ -20,7 +22,7 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
         }
         const attendee = {[formattedOption]: stringInputID, "full_name": fullName, "arrived": true, "date_arrived": localISOTime}
         const toSend = {"attendees": [attendee]}
-        let response = await fetch("http://127.0.0.1:8000/attendees/create", {
+        let response = await fetch(`${apiUrl}/create`, {
             method:'POST',
                     headers: {
                         'Access-Control-Allow-Origin': 'http://localhost:5173',

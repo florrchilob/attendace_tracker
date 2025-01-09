@@ -46,10 +46,10 @@ async def get_clients():
         try:
             while True:
                 message = await queue.get()
-                print("envie bien, creo, " + message)
-                yield f"data: {message}\n\n"
+                print("envie bien, creo")
+                yield f"event: {message['action']}\ndata: {json.dumps(message['data'])}\n\n"
         except asyncio.CancelledError:
-            print("error ")
+            print("error")
             active_connections.remove(queue)
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -122,11 +122,10 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
                 if response_db == "error":
                     return (500, 99)
                 this_attendee.id = response_db
-                full_attendees_added.append(this_attendee)
+                full_attendees_added.append(this_attendee.return_dict())
             else:
                 response_db = True
             db_close_session() 
-            full_attendees_added.append(this_attendee)
             date_arrived_json = None
             if this_attendee.date_arrived:
                 date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
@@ -146,8 +145,15 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
         }
     }
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:      
+        message = {
+            "action": "create",
+            "data": {"attendees": full_attendees_added}
+        }
         for queue in active_connections:
-            await queue.put("hola se mando")
+            try:
+                await queue.put(message)
+            except Exception as e:
+                logging.error(f"Error sending the message: {e}")
         return (201, 0, returning)
     return (400, 101, returning)
 
@@ -225,7 +231,7 @@ def logic_delete_attendee(id: int, testing: dict):
     return(200, 0)
 
 @attendees_route.put("/arrived")
-def attendee_arrived(sent: dict, testing: str = None):
+async def attendee_arrived(sent: dict, testing: str = None):
     if "tehudat_zehut" not in sent and "mispar_ishi" not in sent:
         return to_return(400, 101)
     keys = sent.keys()
@@ -233,15 +239,15 @@ def attendee_arrived(sent: dict, testing: str = None):
     if validation == True:
         attendee = Attendee()
         attendee.create_straight(sent)
-        response = logic_attendee_arrived(attendee, testing)
+        response = await logic_attendee_arrived(attendee, testing)
         if len(response) == 3:
             return to_return(response[0], response[1], response[2])
         else:
             return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
-def logic_attendee_arrived(attendee: Attendee, testing: str = None):
-    db_validation = db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
+async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
+    db_validation =  db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
     if db_validation == "error":
         return (500, 99)
     if db_validation == True:
@@ -258,19 +264,46 @@ def logic_attendee_arrived(attendee: Attendee, testing: str = None):
         return (500, 99)
     row_dict = response[0]._asdict()
     row_dict["date_arrived"] = row_dict["date_arrived"].strftime("%H:%M")
+    message = {
+            "action": "update",
+            "data": {"id": db_validation.id, "arrived": True}
+        }
+    for queue in active_connections:
+        try:
+            await queue.put(message)
+        except Exception as e:
+            logging.error(f"Error sending the message: {e}")
     return (200, 0, row_dict)
 
 @attendees_route.put("/restart")
-def restart_attendace():
+async def restart_attendace():
     response = db_updating({"type": 2})
     if response == "error":
         return to_return(500, 99)
+    message = {
+    "action": "restart_all",
+    "data": {}
+    }
+    for queue in active_connections:
+        try:
+            await queue.put(message)
+        except Exception as e:
+            logging.error(f"Error sending the message: {e}")
     return to_return(200, 0)
 
 
 @attendees_route.delete("/deleteall")
-def delete_all_attendees():
+async def delete_all_attendees():
     response = db_deleting({"table": attendees})
     if response == "error":
         return to_return(500, 99)
+    message = {
+        "action": "delete_all",
+        "data": {}
+    }
+    for queue in active_connections:
+        try:
+            await queue.put(message)
+        except Exception as e:
+            logging.error(f"Error sending the message: {e}")
     return to_return(200, 0)

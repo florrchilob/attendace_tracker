@@ -17,3 +17,14 @@ class Attendee(BaseModel):
         self.full_name = data.get("full_name") 
         self.arrived = data.get("arrived")
         self.date_arrived = data.get("date_arrived")
+        
+
+    def return_dict(self):
+        return {
+            "id": self.id,
+            "mispar_ishi": self.mispar_ishi,
+            "tehudat_zehut": self.tehudat_zehut,
+            "full_name": self.full_name,
+            "arrived": self.arrived,
+            "date_arrived": self.date_arrived.strftime("%H:%M") if self.date_arrived is not None else None
+        }

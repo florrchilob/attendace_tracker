@@ -23,10 +23,65 @@ const AttendeesPage = () => {
   
   useEffect(() => {
     const eventSource = new EventSource("http://localhost:8000/attendees/clients");
+
+    eventSource.onmessage = (event) => {
+      console.log("Mensaje recibido: ", event.data);
+    };
   
-      eventSource.onmessage = (event) => {
-        console.log("recibi "+ event.data);
-      };
+    eventSource.addEventListener("create", (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Create recibido:", data);
+      setAttendees((prev) => [...prev, ...data.attendees]);
+    });
+
+    eventSource.addEventListener("update", (event) => {
+      const updatedAttendee = JSON.parse(event.data);
+      console.log("Update received:", updatedAttendee);
+      setAttendees((prev) =>
+        prev.map((attendee) =>
+          attendee.id === updatedAttendee.id ? updatedAttendee : attendee
+        )
+      );
+    });
+
+    eventSource.addEventListener("restart_all", () => {
+      console.log("Reset all arrived received");
+      Swal.fire({
+        position: "center",
+        icon: "info",
+        title: "מנהל התחיל מחדש את הנוכחות של כל המשתתפים",
+        showConfirmButton: false,
+        timer: 3500,
+        customClass: {
+          popup: "custom-popup",
+          title: "custom-title-success",        
+        },
+      })
+      setAttendees((prev) =>
+        prev.map((attendee) => ({ ...attendee, arrived: false }))
+      );
+    });
+
+    eventSource.addEventListener("delete_all", () => {
+      Swal.fire({
+        position: "center",
+        icon: "info",
+        title: "מנהל מחק את כל המשתתפים",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title"    
+        },
+      })
+      console.log("Delete all received");
+      setAttendees([])
+    });
+
+    eventSource.onerror = () => {
+      console.error("Error con SSE");
+      eventSource.close();
+    };
     
     fetchAttendees();
   
@@ -417,7 +472,7 @@ const filteredAttendees = attendees
 return (
     <div
       dir="rtl"
-      className="bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
+      className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
     >      
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
           <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
@@ -540,13 +595,12 @@ return (
               >
                 {sort.direction === "asc" ? "סדר עולה" : "סדר יורד"}
               </button>
-
             </div>
           </div>
         </div>
 
 
-      <div className="overflow-y-auto max-h-[500px] rounded-lg">
+      <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
         <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
           <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
             <tr>
@@ -557,25 +611,25 @@ return (
               <th className="px-4 py-2 text-center">תאריך הגעה</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="transition-all duration-400">
             {filteredAttendees.map((attendee, index) => (
               <tr
                 key={index}
-                className="border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
+                className="transition-all duration-400 border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
               >
-                <td className="px-4 py-2 text-limeConvined text-lg text-center">
+                <td className="transition-all duration-400 px-4 py-2 text-limeConvined text-lg text-center">
                   {attendee.mispar_ishi}
                 </td>
-                <td className="px-4 py-2 text-turquiseConvined text-lg text-center">
+                <td className="transition-all duration-400 px-4 py-2 text-turquiseConvined text-lg text-center">
                   {attendee.tehudat_zehut}
                 </td>
-                <td className="px-4 py-2 text-greenConvined text-lg text-center">
+                <td className="transition-all duration-400 px-4 py-2 text-greenConvined text-lg text-center">
                   {attendee.full_name}
                 </td>
-                <td className="px-4 py-2 text-lavanderConvined text-lg text-center">
+                <td className="transition-all duration-400 px-4 py-2 text-lavanderConvined text-lg text-center">
                   {attendee.arrived ? "כן" : "לא"}
                 </td>
-                <td className="px-4 py-2 text-pinkConvined text-lg text-center">
+                <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
                   {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
                 </td>
               </tr>

@@ -11,13 +11,15 @@ const AttendeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [file, setFile] = useState(null);
-  const titles = [
-    "מספר אישי",
-    "תעודת זהות",
-    "שם מלא",
-    "נוכחות",
-    "תאריך הגעה"
-  ];
+  const [addingManual, setAddingManual] = useState(false);
+  const [newAttendee, setNewAttendee] = useState({
+    mispar_ishi: "",
+    tehudat_zehut: "",
+    full_name: "",
+    arrived: false,
+    date_arrived: "",
+  });
+  
   const [filter, setFilter] = useState({ field: "", value: "" });
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
@@ -447,7 +449,7 @@ const filteredAttendees = attendees
   const handleSort = (field) => {
     setSort((prev) => ({
       field,
-      direction: prev.direction === "asc" ? "desc" : "asc", // Alterna entre ascendente y descendente
+      direction: prev.direction === "asc" ? "desc" : "asc",
     }));
   };
   
@@ -468,8 +470,21 @@ const filteredAttendees = attendees
     }
   }, [filteredAttendees]);
   
+  const handleManualSubmit = () => {
+    const newAttendees = [newAttendee];
+    setAddingManual(false);
+    handleImport({ target: { files: [newAttendees] } });
+    setNewAttendee({
+      mispar_ishi: "",
+      tehudat_zehut: "",
+      full_name: "",
+      arrived: false,
+      date_arrived: "",
+    });
+  };
+  
 
-return (
+  return (
     <div
       dir="rtl"
       className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
@@ -507,24 +522,39 @@ return (
             </div>
           ) : (
             <div className="flex flex-row">
-              <input
-                type="file"
-                accept=".xlsx"
-                onChange={handleImport}
-                className="transition-all duration-400 block my-4 bg-transparent hover:bg-lavanderConvined
-                border-white hover:border-white font-semibold justify-start text-white bg-gray-700 rounded-lg p-2 flex-col"
+              <div className="flex items-center gap-4">
+                <label
+                  htmlFor="file-upload"
+                  className="transition-all duration-400 bg-gray-700 hover:bg-lavanderConvined text-white font-semibold py-2 px-4 rounded-lg cursor-pointer"
+                >
+                  העלה קובץ אקסל
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleImport}
+                  className="hidden"
                 />
-              {file === true &&
+                {file === true && (
                   <button
-                  onClick={() => {
-                    setAdding(false);
-                    setFile(null);
-                  }}
-                  className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3 flex-col my-auto"
+                    onClick={() => {
+                      setAdding(false);
+                      setFile(null);
+                    }}
+                    className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
                   >
                     ✕
                   </button>
-                }
+                )}
+              </div>
+
+              <button
+                onClick={() => setAddingManual((prev) => !prev)}
+                className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
+              >
+                {addingManual ? "ביטול" : "הוסף משתתף ידני"}
+              </button>
             </div>
           )}
           <div className="flex flex-row items-center">
@@ -546,102 +576,105 @@ return (
             </div>
           </div>
         </div>
-
-        <div className="flex flex-row my-5 w-full">
-          <div className="flex w-full justify-center gap-40">
-            <div className="flex flex-row border-none hover:border-orangeConvined rounded-full">
-              <select
-                onChange={handleFilterFieldChange}
-                value={filter.field}
-                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
-              >
-                <option value="">חפש לפי</option>
-                <option value="mispar_ishi">מספר אישי</option>
-                <option value="tehudat_zehut">תעודת זהות</option>
-                <option value="full_name">שם מלא</option>
-                <option value="arrived">נוכחות</option>
-                <option value="date_arrived">תאריך הגעה</option>
-              </select>
-
-              <input
-                type="text"
-                value={filter.value}
-                onChange={handleFilterChange}
-                placeholder="הקלד ערך"
-                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
-              />
-            </div>
-
-            <div className="flex flex-row border-none hover:border-orangeConvined rounded-full">
-              <select
-                onChange={(e) => handleSort(e.target.value)}
-                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full mx-2 text-center hover:border-orangeConvined focus:border-orangeConvined"
-              >
-                <option value="">מיין לפי</option>
-                <option value="mispar_ishi">מספר אישי</option>
-                <option value="tehudat_zehut">תעודת זהות</option>
-                <option value="full_name">שם מלא</option>
-                <option value="arrived">נוכחות</option>
-                <option value="date_arrived">תאריך הגעה</option>
-              </select>
-              <button
-                onClick={() =>
-                  setSort((prev) => ({
-                    ...prev,
-                    direction: prev.direction === "asc" ? "desc" : "asc",
-                  }))
-                }
-                className="transition-all duration-400 block bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 text-center hover:border-orange-500 w-24  items-center justify-center"
-              >
-                {sort.direction === "asc" ? "סדר עולה" : "סדר יורד"}
-              </button>
-            </div>
-          </div>
-        </div>
-
-
-      <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
-        <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
-          <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
-            <tr>
-              <th className="px-4 py-2 text-center">מספר אישי</th>
-              <th className="px-4 py-2 text-center">תעודת זהות</th>
-              <th className="px-4 py-2 text-center">שם מלא</th>
-              <th className="px-4 py-2 text-center">נוכחות</th>
-              <th className="px-4 py-2 text-center">תאריך הגעה</th>
-            </tr>
-          </thead>
-          <tbody className="transition-all duration-400">
-            {filteredAttendees.map((attendee, index) => (
-              <tr
-                key={index}
-                className="transition-all duration-400 border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
-              >
-                <td className="transition-all duration-400 px-4 py-2 text-limeConvined text-lg text-center">
-                  {attendee.mispar_ishi}
-                </td>
-                <td className="transition-all duration-400 px-4 py-2 text-turquiseConvined text-lg text-center">
-                  {attendee.tehudat_zehut}
-                </td>
-                <td className="transition-all duration-400 px-4 py-2 text-greenConvined text-lg text-center">
-                  {attendee.full_name}
-                </td>
-                <td className="transition-all duration-400 px-4 py-2 text-lavanderConvined text-lg text-center">
-                  {attendee.arrived ? "כן" : "לא"}
-                </td>
-                <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
-                  {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
-                </td>
+  
+        <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
+          <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
+            <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
+              <tr>
+                <th className="px-4 py-2 text-center">מספר אישי</th>
+                <th className="px-4 py-2 text-center">תעודת זהות</th>
+                <th className="px-4 py-2 text-center">שם מלא</th>
+                <th className="px-4 py-2 text-center">נוכחות</th>
+                <th className="px-4 py-2 text-center">תאריך הגעה</th>
+                <th className="px-4 py-2 text-center"></th> {/* Botón de acción */}
               </tr>
-            ))}
-          </tbody>
-
-
-        </table>
+            </thead>
+            <tbody>
+              {addingManual && (
+                <tr className="bg-gray-700">
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="text"
+                      value={newAttendee.mispar_ishi}
+                      onChange={(e) => setNewAttendee({ ...newAttendee, mispar_ishi: e.target.value })}
+                      className="bg-gray-600 p-2 rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="text"
+                      value={newAttendee.tehudat_zehut}
+                      onChange={(e) => setNewAttendee({ ...newAttendee, tehudat_zehut: e.target.value })}
+                      className="bg-gray-600 p-2 rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="text"
+                      value={newAttendee.full_name}
+                      onChange={(e) => setNewAttendee({ ...newAttendee, full_name: e.target.value })}
+                      className="bg-gray-600 p-2 rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <select
+                      value={newAttendee.arrived ? "כן" : "לא"}
+                      onChange={(e) => setNewAttendee({ ...newAttendee, arrived: e.target.value === "כן" })}
+                      className="bg-gray-600 p-2 rounded"
+                    >
+                      <option value="כן">כן</option>
+                      <option value="לא">לא</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="datetime-local"
+                      value={newAttendee.date_arrived}
+                      onChange={(e) => setNewAttendee({ ...newAttendee, date_arrived: e.target.value })}
+                      className="bg-gray-600 p-2 rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      onClick={() => handleManualSubmit()}
+                      className="bg-green-600 px-4 py-2 rounded hover:bg-green-700"
+                    >
+                      הוסף
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {filteredAttendees.map((attendee, index) => (
+                <tr
+                  key={index}
+                  className="transition-all duration-400 border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
+                >
+                  <td className="transition-all duration-400 px-4 py-2 text-limeConvined text-lg text-center">
+                    {attendee.mispar_ishi}
+                  </td>
+                  <td className="transition-all duration-400 px-4 py-2 text-turquiseConvined text-lg text-center">
+                    {attendee.tehudat_zehut}
+                  </td>
+                  <td className="transition-all duration-400 px-4 py-2 text-greenConvined text-lg text-center">
+                    {attendee.full_name}
+                  </td>
+                  <td className="transition-all duration-400 px-4 py-2 text-lavanderConvined text-lg text-center">
+                    {attendee.arrived ? "כן" : "לא"}
+                  </td>
+                  <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
+                    {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+  
+  
+  
 
   
   

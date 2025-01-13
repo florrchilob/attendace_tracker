@@ -214,6 +214,52 @@ const AttendeesPage = () => {
     XLSX.writeFile(workbook, "missing_data_errors.xlsx", { bookType: "xlsx", type: "binary" });
   };
 
+  const saveAttendees = async(attendees) =>{
+    const toSend = { "attendees": attendees };
+    fetch(`${apiUrl}/create`, {
+      method: 'POST',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(toSend)
+    })
+    .then(response => {
+      Swal.close();
+      if (response.status === 500) {
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"
+          },
+        });
+        throw new Error("Server error 500");
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שגיאת שרת פנימית",
+        text: "נסה שוב מאוחר יותר",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title"
+        },
+      });
+    });
+  }
+
   const handleImport = async(e) => {
     Swal.fire({
       title: "טוען...",
@@ -288,81 +334,38 @@ const AttendeesPage = () => {
          
         return newRow;
       })
-
-      const toSend = { "attendees": jsonData };
-      fetch(`${apiUrl}/create`, {
-        method: 'POST',
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(toSend)
-      })
-      .then(response => {
-        Swal.close();
-        if (response.status === 500) {
-          Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "שגיאת שרת פנימית",
-            text: "נסה שוב מאוחר יותר",
-            showConfirmButton: false,
-            timer: 2500,
-            customClass: {
-              popup: "custom-popup-505",
-              title: "custom-popup-505-title"
-            },
-          });
-          throw new Error("Server error 500");
-        }
-        return response.json();
-      })
+      const dataResponse = await saveAttendees(jsonData)
       .then(dataResponse => {
-        fetchAttendees()
-        const missingData = dataResponse["data"]["missing_data"];
-        if (missingData.length > 0) {
-          Swal.fire({
-            position: "center",
-            icon: "warning",
-            title: "בדוק פרטים בבקשה",
-            text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
-            showConfirmButton: false,
-            timer: 2000,
-            customClass: {
-              popup: "custom-popup-505",
-              title: "custom-popup-505-title"
-            },
-          });
-          exportErrorsToExcel(missingData)
-        } else {
-          Swal.fire({
-            position: "center",
-            icon: "success",
-            title: "הנתונים נשמרו בהצלחה",
-            showConfirmButton: false,
-            timer: 2000,
-            customClass: {
-              popup: "custom-popup",
-              title: "custom-title-success",
-            },
-          });
-        }
+          fetchAttendees()
+          const missingData = dataResponse["data"]["missing_data"];
+          if (missingData.length > 0) {
+            Swal.fire({
+              position: "center",
+              icon: "warning",
+              title: "בדוק פרטים בבקשה",
+              text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
+              showConfirmButton: false,
+              timer: 2000,
+              customClass: {
+                popup: "custom-popup-505",
+                title: "custom-popup-505-title"
+              },
+            });
+            exportErrorsToExcel(missingData)
+          } else {
+            Swal.fire({
+              position: "center",
+              icon: "success",
+              title: "הנתונים נשמרו בהצלחה",
+              showConfirmButton: false,
+              timer: 2000,
+              customClass: {
+                popup: "custom-popup",
+                title: "custom-title-success",
+              },
+            });
+          }
       })
-      .catch(error => {
-        console.error("Error:", error);
-        Swal.fire({
-          position: "center",
-          icon: "error",
-          title: "שגיאת שרת פנימית",
-          text: "נסה שוב מאוחר יותר",
-          showConfirmButton: false,
-          timer: 2500,
-          customClass: {
-            popup: "custom-popup-505",
-            title: "custom-popup-505-title"
-          },
-        });
-      });
       };
       
     fetchAttendees();
@@ -477,90 +480,112 @@ const filteredAttendees = attendees
     MySwal.fire({
       title: '<h1 class="text-2xl font-bold text-limeConvined">משתתף חדש</h1>',
       html: `
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col">
-              <label for="full_name" class="text-white font-semibold">שם*</label>
-              <input
-                id="full_name"
-                type="text"
-                placeholder="הכנס שם"
-                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-              />
-              <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
-            </div>
-            <div class="flex flex-col">
-              <label for="mispar_ishi" class="text-white font-semibold">מספר אישי *</label>
-              <input
-                id="mispar_ishi"
-                type="text"
-                placeholder="הכנס מספר אישי"
-                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-              />
-              <small class="text-redConvinedStronger mt-1">חובה למלא תעודה מזהה</small>
-            </div>
-            <div class="flex flex-col">
-              <label for="tehudat_zehut" class="text-white font-semibold">תעודת זהות *</label>
-              <input
-                id="tehudat_zehut"
-                type="text"
-                placeholder="הכנס תעודת זהות"
-                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-              />
-              <small class="text-redConvinedStronger mt-1">חובה למלא תעודה מזהה</small>
-            </div>
-            <div class="flex flex-col">
-              <label for="attendance" class="text-white font-semibold">נוכחות</label>
-              <select
-                id="attendance"
-                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-              >
-                <option value="" disabled hidden>בחר נוכחות</option>
-                <option value="כן">כן</option>
-                <option value="לא">לא</option>
-              </select>
-              <small class="text-gray-400 mt-1">שדה לא חובה</small>
-            </div>
-            <div class="flex flex-col">
-              <label for="date_arrived" class="text-white font-semibold">תאריך הגעה</label>
-              <input
-                id="date_arrived"
-                type="datetime-local"
-                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-              />
-              <small class="text-gray-400 mt-1">שדה לא חובה</small>
-            </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col">
+            <label for="full_name" class="text-white font-semibold">שם מלא *</label>
+            <input
+              id="full_name"
+              type="text"
+              placeholder="הכנס שם מלא"
+              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+            />
+            <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
+          </div>
+          <div class="flex flex-col">
+            <label for="mispar_ishi" class="text-white font-semibold">מספר אישי</label>
+            <input
+              id="mispar_ishi"
+              type="number"
+              placeholder="הכנס מספר אישי"
+              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+            />
+            <small class="text-gray-400 mt-1">שדה לא חובה</small>
+          </div>
+          <div class="flex flex-col">
+            <label for="tehudat_zehut" class="text-white font-semibold">תעודת זהות</label>
+            <input
+              id="tehudat_zehut"
+              type="number"
+              placeholder="הכנס תעודת זהות"
+              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+            />
+            <small class="text-gray-400 mt-1">שדה לא חובה</small>
+          </div>
+          <div class="flex flex-col">
+            <label for="attendance" class="text-white font-semibold">נוכחות</label>
+            <select
+              id="attendance"
+              value=""
+              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+            >
+              <option value={null}>בחר נוכחות</option>
+              <option value="כן">כן</option>
+              <option value="לא">לא</option>
+            </select>
+            <small class="text-gray-400 mt-1">שדה לא חובה</small>
+          </div>
+          <div class="flex flex-col">
+            <label for="date_arrived" class="text-white font-semibold">תאריך הגעה</label>
+            <input
+              id="date_arrived"
+              type="datetime-local"
+              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+            />
+            <small class="text-gray-400 mt-1">שדה לא חובה</small>
+          </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: "הוסף",
       cancelButtonText: "ביטול",
       customClass: {
-        popup: "custom-popup bg-gray-700 p-6 rounded-lg shadow-xl", // Personaliza el estilo general
+        popup: "custom-popup bg-gray-700 p-6 rounded-lg shadow-xl",
         confirmButton: "bg-greenConvined text-black p-2 rounded-lg hover:bg-green-700",
         cancelButton: "bg-gray-600 text-white p-2 rounded-lg hover:bg-gray-700",
       },
       preConfirm: () => {
-        const full_name = document.getElementById("full_name").value;
-        const mispar_ishi = document.getElementById("mispar_ishi").value;
-        const tehudat_zehut = document.getElementById("tehudat_zehut").value;
-  
-        if (!full_name || !mispar_ishi || !tehudat_zehut) {
-          Swal.showValidationMessage("יש למלא את כל השדות המסומנים בכוכבית (*)");
+        const full_name = document.getElementById("full_name").value.trim();
+        const mispar_ishi = document.getElementById("mispar_ishi").value.trim();
+        const tehudat_zehut = document.getElementById("tehudat_zehut").value.trim();
+        const attendance = document.getElementById("attendance").value;
+        const date_arrived = document.getElementById("date_arrived").value;
+          if (!full_name) {
+          Swal.showValidationMessage("יש למלא שם");
           return false;
         }
   
+        if (!tehudat_zehut && !mispar_ishi) {
+          Swal.showValidationMessage("יש למלא מספר אישי או תעודת זהות");
+          return false;
+        }
+  
+        if (tehudat_zehut && !/^\d{9}$/.test(tehudat_zehut)) {
+          Swal.showValidationMessage("תעודת זהות חייבת להכיל 9 ספרות");
+          return false;
+        }
+  
+        if (mispar_ishi && mispar_ishi.length < 6) {
+          Swal.showValidationMessage("מספר אישי חייב להכיל לפחות 6 ספרות");
+          return false;
+        }
+  
+        if (attendance === "כן" && !date_arrived) {
+          Swal.showValidationMessage("אם המשתתף הגיע, יש להזין תאריך ושעה");
+          return false;
+        }
         handleManualSubmit({
           full_name,
           mispar_ishi,
           tehudat_zehut,
-          arrived: document.getElementById("attendance").value === "כן",
-          date_arrived: document.getElementById("date_arrived").value,
+          arrived: attendance === "כן",
+          date_arrived: attendance === "כן" ? date_arrived : null,
         });
   
         return true;
       },
     });
   };
+  
   
   
   return (

@@ -6,7 +6,10 @@ import GarbageLogo from "../assets/Logos/GarbageLogo";
 import Swal from "sweetalert2";
 import '../App.css'
 
+
 const AttendeesPage = () => {
+  // const apiUrl = process.env.REACT_APP_API_URL + "/attendees";
+  const apiUrl = "http://127.0.0.1:8000" + "/attendees";
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -24,7 +27,7 @@ const AttendeesPage = () => {
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
   useEffect(() => {
-    const eventSource = new EventSource("http://localhost:8000/attendees/clients");
+    const eventSource = new EventSource(apiUrl);
 
     eventSource.onmessage = (event) => {
       console.log("Mensaje recibido: ", event.data);
@@ -95,7 +98,7 @@ const AttendeesPage = () => {
 
   async function fetchAttendees() {
     try {
-      const response = await fetch("http://127.0.0.1:8000/attendees/get");
+      const response = await fetch(`${apiUrl}/get`);
       const data = await response.json();
       const attendees = data["data"]
       setAttendees(attendees);
@@ -141,7 +144,7 @@ const AttendeesPage = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         exportToExcel()
-        let response = await fetch("http://127.0.0.1:8000/attendees/deleteall", {
+        let response = await fetch(`${apiUrl}/deleteall`, {
           method: 'DELETE',
           headers: {
             'Access-Control-Allow-Origin': '*',
@@ -286,7 +289,7 @@ const AttendeesPage = () => {
       })
 
       const toSend = { "attendees": jsonData };
-      fetch("http://127.0.0.1:8000/attendees/create", {
+      fetch(`${apiUrl}/create`, {
         method: 'POST',
         headers: {
           'Access-Control-Allow-Origin': '*',
@@ -395,7 +398,7 @@ const AttendeesPage = () => {
   const handleRestartAttendace = async() => {
 
     try { 
-      const response = await fetch("http://127.0.0.1:8000/attendees/restart", {
+      const response = await fetch(`${apiUrl}/restart`, {
       method: 'PUT',
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -586,7 +589,6 @@ const filteredAttendees = attendees
                 <th className="px-4 py-2 text-center">שם מלא</th>
                 <th className="px-4 py-2 text-center">נוכחות</th>
                 <th className="px-4 py-2 text-center">תאריך הגעה</th>
-                <th className="px-4 py-2 text-center"></th> {/* Botón de acción */}
               </tr>
             </thead>
             <tbody>
@@ -672,13 +674,6 @@ const filteredAttendees = attendees
       </div>
     </div>
   );
-  
-  
-  
-
-  
-  
-  
 };
 
 export default AttendeesPage;

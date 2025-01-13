@@ -8,6 +8,8 @@ import '../App.css'
 const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) => {
   const inputRef = useRef(null);
   
+  // const apiUrl = process.env.REACT_APP_API_URL + "/attendees";
+  const apiUrl = "http://127.0.0.1:8000" + "/attendees";
 
   const onChangeInput = () => {
     if (selectedOption == "misparIshi" && inputRef.current.value.length > 253 || selectedOption == "tehudatZehut" && inputRef.current.value.length > 9){
@@ -52,10 +54,10 @@ const InputPage = ({ inputID, setInputID, selectedOption, setSelectedOption, set
         stringInputID = stringInputID.slice(1)
       }
       const attendee = {[formattedOption]: stringInputID}
-      const  response = await fetch("http://127.0.0.1:8000/attendees/arrived", {
+      const  response = await fetch(`${apiUrl}/arrived`, {
         method:'PUT',
                 headers: {
-                    'Access-Control-Allow-Origin': 'http://localhost:5173',
+                    'Access-Control-Allow-Origin': 'http://localhost:80',
                     'Content-Type': 'application/json', 
                 },
                 body: JSON.stringify(attendee)

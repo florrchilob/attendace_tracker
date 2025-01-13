@@ -6,7 +6,6 @@ import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import Swal from "sweetalert2";
 import '../App.css'
-import InputAttendeeManual from "../components/inputAttendeeManual";
 
 
 const AttendeesPage = () => {
@@ -202,7 +201,7 @@ const AttendeesPage = () => {
     const formattedData = missingData.map((item) => ({
       "מספר אישי": item.attendee.mispar_ishi || "",
       "תעודת זהות": item.attendee.tehudat_zehut || "",
-      "שם מלא": item.attendee.full_name || "",
+      "שם": item.attendee.full_name || "",
       "נוכחות": item.attendee.arrived === true ? "כן" : item.attendee.arrived === false ? "לא" : "",
       "תאריך הגעה": item.attendee.date_arrived || "",
       "שגיאה": item.error.message,
@@ -242,7 +241,7 @@ const AttendeesPage = () => {
       const columnMapping = {
         "תעודת זהות": "tehudat_zehut",
         "מספר אישי": "mispar_ishi",
-        "שם מלא": "full_name",
+        "שם": "full_name",
         "נוכחות": "arrived",
         "תאריך הגעה": "date_arrived",
       };
@@ -383,7 +382,7 @@ const AttendeesPage = () => {
     const exportData = attendees.map(attendee => ({
       "מספר אישי": attendee.mispar_ishi || "",
       "תעודת זהות": attendee.tehudat_zehut || "",
-      "שם מלא": attendee.full_name || "",
+      "שםי": attendee.full_name || "",
       "נוכחות": attendee.arrived ? "כן" : "לא",
       "תאריך הגעה": attendee.date_arrived
         ? formatDate(attendee.date_arrived)
@@ -476,30 +475,99 @@ const filteredAttendees = attendees
 
   const handleAddManual = () => {
     MySwal.fire({
-      title: "משתתף חדש",
-      html: (
-        <InputAttendeeManual/>
-      ),
+      title: '<h1 class="text-2xl font-bold text-limeConvined">משתתף חדש</h1>',
+      html: `
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col">
+              <label for="full_name" class="text-white font-semibold">שם*</label>
+              <input
+                id="full_name"
+                type="text"
+                placeholder="הכנס שם"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="mispar_ishi" class="text-white font-semibold">מספר אישי *</label>
+              <input
+                id="mispar_ishi"
+                type="text"
+                placeholder="הכנס מספר אישי"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">חובה למלא תעודה מזהה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="tehudat_zehut" class="text-white font-semibold">תעודת זהות *</label>
+              <input
+                id="tehudat_zehut"
+                type="text"
+                placeholder="הכנס תעודת זהות"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">חובה למלא תעודה מזהה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="attendance" class="text-white font-semibold">נוכחות</label>
+              <select
+                id="attendance"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              >
+                <option value="" disabled hidden>בחר נוכחות</option>
+                <option value="כן">כן</option>
+                <option value="לא">לא</option>
+              </select>
+              <small class="text-gray-400 mt-1">שדה לא חובה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="date_arrived" class="text-white font-semibold">תאריך הגעה</label>
+              <input
+                id="date_arrived"
+                type="datetime-local"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-gray-400 mt-1">שדה לא חובה</small>
+            </div>
+        </div>
+      `,
       showCancelButton: true,
       confirmButtonText: "הוסף",
       cancelButtonText: "ביטול",
+      customClass: {
+        popup: "custom-popup bg-gray-700 p-6 rounded-lg shadow-xl", // Personaliza el estilo general
+        confirmButton: "bg-greenConvined text-black p-2 rounded-lg hover:bg-green-700",
+        cancelButton: "bg-gray-600 text-white p-2 rounded-lg hover:bg-gray-700",
+      },
       preConfirm: () => {
-        if (!newAttendee.full_name || !newAttendee.mispar_ishi || !newAttendee.tehudat_zehut) {
+        const full_name = document.getElementById("full_name").value;
+        const mispar_ishi = document.getElementById("mispar_ishi").value;
+        const tehudat_zehut = document.getElementById("tehudat_zehut").value;
+  
+        if (!full_name || !mispar_ishi || !tehudat_zehut) {
           Swal.showValidationMessage("יש למלא את כל השדות המסומנים בכוכבית (*)");
           return false;
         }
-        handleManualSubmit();
+  
+        handleManualSubmit({
+          full_name,
+          mispar_ishi,
+          tehudat_zehut,
+          arrived: document.getElementById("attendance").value === "כן",
+          date_arrived: document.getElementById("date_arrived").value,
+        });
+  
         return true;
       },
     });
   };
+  
   
   return (
     <div
       dir="rtl"
       className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
     >      
-    <InputAttendeeManual newAttendee={newAttendee} setNewAttendee={setNewAttendee}/>
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
           <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
             רשימת משתתפים
@@ -594,7 +662,7 @@ const filteredAttendees = attendees
               <tr>
                 <th className="px-4 py-2 text-center">מספר אישי</th>
                 <th className="px-4 py-2 text-center">תעודת זהות</th>
-                <th className="px-4 py-2 text-center">שם מלא</th>
+                <th className="px-4 py-2 text-center">שם</th>
                 <th className="px-4 py-2 text-center">נוכחות</th>
                 <th className="px-4 py-2 text-center">תאריך הגעה</th>
               </tr>

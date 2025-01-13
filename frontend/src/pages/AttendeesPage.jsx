@@ -28,7 +28,7 @@ const AttendeesPage = () => {
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
   useEffect(() => {
-    const eventSource = new EventSource(apiUrl);
+    let eventSource = new EventSource(apiUrl+"/clients");
 
     eventSource.onmessage = (event) => {
       console.log("Mensaje recibido: ", event.data);
@@ -84,9 +84,13 @@ const AttendeesPage = () => {
       setAttendees([])
     });
 
-    eventSource.onerror = () => {
-      console.error("Error con SSE");
-      eventSource.close();
+
+    eventSource.onerror = (error) => {
+      console.error("Error con SSE:", error);
+      setTimeout(() => {
+        console.log("Intentando reconectar SSE...");
+        eventSource = new EventSource(`${apiUrl}/clients`);
+      }, 5000);
     };
     
     fetchAttendees();

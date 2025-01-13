@@ -214,53 +214,8 @@ const AttendeesPage = () => {
     XLSX.writeFile(workbook, "missing_data_errors.xlsx", { bookType: "xlsx", type: "binary" });
   };
 
-  const saveAttendees = async(attendees) =>{
-    const toSend = { "attendees": attendees };
-    fetch(`${apiUrl}/create`, {
-      method: 'POST',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(toSend)
-    })
-    .then(response => {
-      Swal.close();
-      if (response.status === 500) {
-        Swal.fire({
-          position: "center",
-          icon: "error",
-          title: "שגיאת שרת פנימית",
-          text: "נסה שוב מאוחר יותר",
-          showConfirmButton: false,
-          timer: 2500,
-          customClass: {
-            popup: "custom-popup-505",
-            title: "custom-popup-505-title"
-          },
-        });
-        throw new Error("Server error 500");
-      }
-      return response.json();
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      Swal.fire({
-        position: "center",
-        icon: "error",
-        title: "שגיאת שרת פנימית",
-        text: "נסה שוב מאוחר יותר",
-        showConfirmButton: false,
-        timer: 2500,
-        customClass: {
-          popup: "custom-popup-505",
-          title: "custom-popup-505-title"
-        },
-      });
-    });
-  }
 
-  const handleImport = async(e) => {
+  const handleImport = async(e, cameFrom = null) => {
     Swal.fire({
       title: "טוען...",
       html: "אנא המתן בזמן שהנתונים נטענים.",
@@ -276,8 +231,10 @@ const AttendeesPage = () => {
     setFile(true);
     const file = e.target.files[0];
     const reader = new FileReader();
-
+    
     reader.onload = async (event) => {
+    if (cameFrom != null){
+      
       const data = new Uint8Array(event.target.result);
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
@@ -334,38 +291,82 @@ const AttendeesPage = () => {
          
         return newRow;
       })
-      const dataResponse = await saveAttendees(jsonData)
-      .then(dataResponse => {
-          fetchAttendees()
-          const missingData = dataResponse["data"]["missing_data"];
-          if (missingData.length > 0) {
-            Swal.fire({
-              position: "center",
-              icon: "warning",
-              title: "בדוק פרטים בבקשה",
-              text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
-              showConfirmButton: false,
-              timer: 2000,
-              customClass: {
-                popup: "custom-popup-505",
-                title: "custom-popup-505-title"
-              },
-            });
-            exportErrorsToExcel(missingData)
-          } else {
-            Swal.fire({
-              position: "center",
-              icon: "success",
-              title: "הנתונים נשמרו בהצלחה",
-              showConfirmButton: false,
-              timer: 2000,
-              customClass: {
-                popup: "custom-popup",
-                title: "custom-title-success",
-              },
-            });
-          }
+    }
+
+      const toSend = { "attendees": jsonData };
+      fetch(`${apiUrl}/create`, {
+        method: 'POST',
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(toSend)
       })
+      .then(response => {
+        Swal.close();
+        if (response.status === 500) {
+          Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "שגיאת שרת פנימית",
+            text: "נסה שוב מאוחר יותר",
+            showConfirmButton: false,
+            timer: 2500,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"
+            },
+          });
+          throw new Error("Server error 500");
+        }
+        return response.json();
+      })
+      .then(dataResponse => {
+        fetchAttendees()
+        const missingData = dataResponse["data"]["missing_data"];
+        if (missingData.length > 0) {
+          Swal.fire({
+            position: "center",
+            icon: "warning",
+            title: "בדוק פרטים בבקשה",
+            text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
+            showConfirmButton: false,
+            timer: 2000,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"
+            },
+          });
+          exportErrorsToExcel(missingData)
+        } else {
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "הנתונים נשמרו בהצלחה",
+            showConfirmButton: false,
+            timer: 2000,
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          });
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"
+          },
+        });
+      });
       };
       
     fetchAttendees();

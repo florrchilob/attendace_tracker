@@ -1,3 +1,4 @@
+import withReactContent from "sweetalert2-react-content";
 import * as XLSX from "xlsx";
 import { io } from "socket.io-client";
 import React, { useEffect, useRef, useState } from "react";
@@ -5,6 +6,7 @@ import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import Swal from "sweetalert2";
 import '../App.css'
+import InputAttendeeManual from "../components/inputAttendeeManual";
 
 
 const AttendeesPage = () => {
@@ -367,9 +369,9 @@ const AttendeesPage = () => {
     fetchAttendees();
     setTimeout(() => {
         setAdding(false);
+        setAddingManual(false)
     }, 1000);
     reader.readAsArrayBuffer(file);
-
   };
   
   function exportToExcel() {
@@ -396,7 +398,6 @@ const AttendeesPage = () => {
   }
 
   const handleRestartAttendace = async() => {
-
     try { 
       const response = await fetch(`${apiUrl}/restart`, {
       method: 'PUT',
@@ -415,14 +416,7 @@ const AttendeesPage = () => {
     }
   }
 
-  const handleFilterChange = (e) => {
-    setFilter((prev) => ({ ...prev, value: e.target.value.toLowerCase() }));
-  };
-  
-  const handleFilterFieldChange = (e) => {
-    setFilter((prev) => ({ ...prev, field: e.target.value }));
-  };
-  
+ 
 const filteredAttendees = attendees
   .filter((attendee) => {
     if (!filter.field || !filter.value) return true;
@@ -447,14 +441,6 @@ const filteredAttendees = attendees
     }
   });
 
-
-
-  const handleSort = (field) => {
-    setSort((prev) => ({
-      field,
-      direction: prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
   
   useEffect(() => {
     if (attendees.length > 0 && filteredAttendees.length === 0 && (filter.field || filter.value)) {
@@ -485,13 +471,35 @@ const filteredAttendees = attendees
       date_arrived: "",
     });
   };
-  
 
+  const MySwal = withReactContent(Swal);
+
+  const handleAddManual = () => {
+    MySwal.fire({
+      title: "משתתף חדש",
+      html: (
+        <InputAttendeeManual/>
+      ),
+      showCancelButton: true,
+      confirmButtonText: "הוסף",
+      cancelButtonText: "ביטול",
+      preConfirm: () => {
+        if (!newAttendee.full_name || !newAttendee.mispar_ishi || !newAttendee.tehudat_zehut) {
+          Swal.showValidationMessage("יש למלא את כל השדות המסומנים בכוכבית (*)");
+          return false;
+        }
+        handleManualSubmit();
+        return true;
+      },
+    });
+  };
+  
   return (
     <div
       dir="rtl"
       className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
     >      
+    <InputAttendeeManual newAttendee={newAttendee} setNewAttendee={setNewAttendee}/>
       <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
           <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
             רשימת משתתפים
@@ -524,41 +532,42 @@ const filteredAttendees = attendees
               </div>
             </div>
           ) : (
-            <div className="flex flex-row">
-              <div className="flex items-center gap-4">
-                <label
-                  htmlFor="file-upload"
-                  className="transition-all duration-400 bg-gray-700 hover:bg-lavanderConvined text-white font-semibold py-2 px-4 rounded-lg cursor-pointer"
-                >
-                  העלה קובץ אקסל
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept=".xlsx"
-                  onChange={handleImport}
-                  className="hidden"
-                />
-                {file === true && (
-                  <button
-                    onClick={() => {
-                      setAdding(false);
-                      setFile(null);
-                    }}
-                    className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
+          <div className="flex flex-row">
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => setAddingManual((prev) => !prev)}
-                className="transition-all duration-400 px-4 py-2 bg-transparent hover:border-greenConvined text-greenConvined font-semibold rounded-lg border border-white"
+                onClick={handleAddManual}
+                className="transition-all duration-400 bg-gray-700 hover:bg-lavanderConvined hover:text-black text-white font-semibold py-2 px-4 rounded-lg cursor-pointer"
               >
-                {addingManual ? "ביטול" : "הוסף משתתף ידני"}
+                הוסף משתתף ידני
               </button>
+              <label
+                htmlFor="file-upload"
+                className="transition-all duration-400 bg-gray-700 hover:bg-greenConvined hover:text-black text-white font-semibold py-2 px-4 rounded-lg cursor-pointer"
+              >
+                העלה קובץ אקסל
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept=".xlsx"
+                onChange={handleImport}
+                className="hidden"
+              />
+              {file === true && (
+                <button
+                  onClick={() => {
+                    setAdding(false);
+                    setFile(null);
+                    setAddingManual(false);
+                  }}
+                  className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
+                >
+                  ✕
+                </button>
+              )}
             </div>
+          </div>
+
           )}
           <div className="flex flex-row items-center">
             <div className="flex justify-end">
@@ -579,7 +588,6 @@ const filteredAttendees = attendees
             </div>
           </div>
         </div>
-  
         <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
           <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
             <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
@@ -592,60 +600,6 @@ const filteredAttendees = attendees
               </tr>
             </thead>
             <tbody>
-              {addingManual && (
-                <tr className="bg-gray-700">
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="text"
-                      value={newAttendee.mispar_ishi}
-                      onChange={(e) => setNewAttendee({ ...newAttendee, mispar_ishi: e.target.value })}
-                      className="bg-gray-600 p-2 rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="text"
-                      value={newAttendee.tehudat_zehut}
-                      onChange={(e) => setNewAttendee({ ...newAttendee, tehudat_zehut: e.target.value })}
-                      className="bg-gray-600 p-2 rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="text"
-                      value={newAttendee.full_name}
-                      onChange={(e) => setNewAttendee({ ...newAttendee, full_name: e.target.value })}
-                      className="bg-gray-600 p-2 rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <select
-                      value={newAttendee.arrived ? "כן" : "לא"}
-                      onChange={(e) => setNewAttendee({ ...newAttendee, arrived: e.target.value === "כן" })}
-                      className="bg-gray-600 p-2 rounded"
-                    >
-                      <option value="כן">כן</option>
-                      <option value="לא">לא</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="datetime-local"
-                      value={newAttendee.date_arrived}
-                      onChange={(e) => setNewAttendee({ ...newAttendee, date_arrived: e.target.value })}
-                      className="bg-gray-600 p-2 rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleManualSubmit()}
-                      className="bg-green-600 px-4 py-2 rounded hover:bg-green-700"
-                    >
-                      הוסף
-                    </button>
-                  </td>
-                </tr>
-              )}
               {filteredAttendees.map((attendee, index) => (
                 <tr
                   key={index}

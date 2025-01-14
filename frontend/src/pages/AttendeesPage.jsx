@@ -14,15 +14,10 @@ const AttendeesPage = () => {
   const [attendees, setAttendees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [file, setFile] = useState(null);
   const [addingManual, setAddingManual] = useState(false);
-  const [newAttendee, setNewAttendee] = useState({
-    mispar_ishi: "",
-    tehudat_zehut: "",
-    full_name: "",
-    arrived: false,
-    date_arrived: "",
-  });
+
   
   const [filter, setFilter] = useState({ field: "", value: "" });
   const [sort, setSort] = useState({ field: "", direction: "asc" })
@@ -361,7 +356,6 @@ const handleImport = async (e, sent = null) => {
 
 const sendDataToAPI = async (data) => {
   const toSend = { attendees: data };
-
   try {
     const response = await fetch(`${apiUrl}/create`, {
       method: "POST",
@@ -372,14 +366,12 @@ const sendDataToAPI = async (data) => {
       body: JSON.stringify(toSend),
     });
 
-    if (!response.ok) {
+    if (response.status == 500) {
       throw new Error(`Server error: ${response.status}`);
     }
-
     const dataResponse = await response.json();
     handleAPIResponse(dataResponse);
   } catch (error) {
-    console.log(error)
     console.error("Error in sendDataToAPI:", error);
 
     Swal.fire({
@@ -548,61 +540,70 @@ const filteredAttendees = attendees
     MySwal.fire({
       title: '<h1 class="text-2xl font-bold text-limeConvined">משתתף חדש</h1>',
       html: `
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col">
-            <label for="full_name" class="text-white font-semibold">שם *</label>
-            <input
-              id="full_name"
-              type="text"
-              placeholder="הכנס שם"
-              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-            />
-            <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col">
+              <label for="full_name" class="text-white font-semibold">שם *</label>
+              <input
+                id="full_name"
+                type="text"
+                placeholder="הכנס שם"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="mispar_ishi" class="text-white font-semibold">מספר אישי</label>
+              <input
+                id="mispar_ishi"
+                type="number"
+                placeholder="הכנס מספר אישי"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">תעודת זהות או מספר אישי הם שדות חובה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="tehudat_zehut" class="text-white font-semibold">תעודת זהות</label>
+              <input
+                id="tehudat_zehut"
+                type="number"
+                placeholder="הכנס תעודת זהות"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">תעודת זהות או מספר אישי הם שדות חובה</small>
+            </div>
+            <div class="flex flex-col">
+              <label for="attendance" class="text-white font-semibold">נוכחות</label>
+              <select
+                id="attendance"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+                onchange="toggleDateField(this.value)"
+              >
+                <option value="">בחר נוכחות</option>
+                <option value="כן">כן</option>
+                <option value="לא">לא</option>
+              </select>
+            </div>
+            <div id="date-field" class="flex flex-col" style="display: none;">
+              <label for="date_arrived" class="text-white font-semibold">תאריך הגעה *</label>
+              <input
+                id="date_arrived"
+                type="datetime-local"
+                class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
+              />
+              <small class="text-redConvinedStronger mt-1">שדה זה חובה אם המשתתף הגיע</small>
+            </div>
           </div>
-          <div class="flex flex-col">
-            <label for="mispar_ishi" class="text-white font-semibold">מספר אישי</label>
-            <input
-              id="mispar_ishi"
-              type="number"
-              placeholder="הכנס מספר אישי"
-              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-            />
-            <small class="text-gray-400 mt-1">שדה לא חובה</small>
-          </div>
-          <div class="flex flex-col">
-            <label for="tehudat_zehut" class="text-white font-semibold">תעודת זהות</label>
-            <input
-              id="tehudat_zehut"
-              type="number"
-              placeholder="הכנס תעודת זהות"
-              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-            />
-            <small class="text-gray-400 mt-1">שדה לא חובה</small>
-          </div>
-          <div class="flex flex-col">
-            <label for="attendance" class="text-white font-semibold">נוכחות</label>
-            <select
-              id="attendance"
-              value=""
-              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-            >
-              <option value={null}>בחר נוכחות</option>
-              <option value="כן">כן</option>
-              <option value="לא">לא</option>
-            </select>
-            <small class="text-gray-400 mt-1">שדה לא חובה</small>
-          </div>
-          <div class="flex flex-col">
-            <label for="date_arrived" class="text-white font-semibold">תאריך הגעה</label>
-            <input
-              id="date_arrived"
-              type="datetime-local"
-              class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
-            />
-            <small class="text-gray-400 mt-1">שדה לא חובה</small>
-          </div>
-        </div>
-      `,
+          <script>
+            function toggleDateField(value) {
+              const dateField = document.getElementById('date-field');
+              if (value === 'כן') {
+                dateField.style.display = 'flex';
+              } else {
+                dateField.style.display = 'none';
+              }
+            }
+          </script>
+        `,
       showCancelButton: true,
       confirmButtonText: "הוסף",
       cancelButtonText: "ביטול",
@@ -731,31 +732,41 @@ const filteredAttendees = attendees
               >
                 הוסף משתתף ידני
               </button>
-              <label
-                htmlFor="file-upload"
-                className="transition-all duration-400 bg-gray-700 hover:bg-greenConvined hover:text-black text-white font-semibold py-2 px-4 rounded-lg cursor-pointer"
-              >
-                העלה קובץ אקסל
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".xlsx"
-                onChange={handleImport}
-                className="hidden"
-              />
-              {file === true && (
-                <button
-                  onClick={() => {
-                    setAdding(false);
-                    setFile(null);
-                    setAddingManual(false);
-                  }}
-                  className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
+              <div className="flex items-center gap-4 relative">
+                <label
+                  htmlFor="file-upload"
+                  className="transition-all duration-400 bg-gray-700 hover:bg-greenConvined hover:text-black text-white font-semibold py-2 px-4 rounded-lg cursor-pointer relative w-full text-center"
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
                 >
-                  ✕
-                </button>
-              )}
+                  {isHovered && (
+                    <div className="absolute -top-16 left-0 w-full bg-gray-800 text-white text-xs rounded-md px-2 py-1 text-center">
+                      כותרות נדרשות באקסל: שם ותעודת זהות או מספר אישי, כתובים בדיוק כך. 
+                      כותרות אופציונליות: נוכחות ותאריך הגעה
+                    </div>
+                  )}
+                  העלה קובץ אקסל
+                  <input id="file-upload"
+                  type="file"
+                  accept=".xlsx"
+                  onChange={handleImport}
+                  className="hidden"
+                   />
+                </label>
+                {file === true && (
+                  <button
+                    onClick={() => {
+                      setAdding(false);
+                      setFile(null);
+                      setAddingManual(false);
+                    }}
+                    className="transition-all border-none duration-400 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
 

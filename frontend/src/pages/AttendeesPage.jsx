@@ -311,6 +311,9 @@ const AttendeesPage = () => {
     if (cameFrom === null){
       jsonData = excelToJSON(event)
     }
+    else{
+      
+    }
     const toSend = { "attendees": jsonData };
     console.log("toSend", toSend)
       fetch(`${apiUrl}/create`, {
@@ -483,17 +486,16 @@ const filteredAttendees = attendees
     }
   }, [filteredAttendees]);
   
-  const handleManualSubmit = () => {
-    const newAttendees = [newAttendee];
+  const handleManualSubmit = (newAttendee) => {
     setAddingManual(false);
-    handleImport({ target: { files: [newAttendees] } });
-    setNewAttendee({
-      mispar_ishi: "",
-      tehudat_zehut: "",
-      full_name: "",
-      arrived: false,
-      date_arrived: "",
-    });
+    handleImport(null, newAttendee);
+    // setNewAttendee({
+    //   mispar_ishi: "",
+    //   tehudat_zehut: "",
+    //   full_name: "",
+    //   arrived: false,
+    //   date_arrived: "",
+    // });
   };
 
   const MySwal = withReactContent(Swal);
@@ -732,39 +734,41 @@ const filteredAttendees = attendees
           </div>
         </div>
           <div className="flex flex-row w-full mb-4 mt-6 justify-between px-80">
-          <div className="flex items-center w-1/2">
-            <select
-              onChange={handleFilterFieldChange}
-              value={filter.field}
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
-            >
-              <option value="">חפש לפי</option>
-              <option value="mispar_ishi">מספר אישי</option>
-              <option value="tehudat_zehut">תעודת זהות</option>
-              <option value="full_name">שם מלא</option>
-              <option value="arrived">נוכחות</option>
-              <option value="date_arrived">תאריך הגעה</option>
-            </select>
-            <input
-              type="text"
-              value={filter.value}
-              onChange={handleFilterChange}
-              placeholder="הקלד ערך"
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-2/3 text-center"
-            />
-            {filter.value && (
-              <button
-                onClick={() =>
-                  setFilter((prev) => ({ ...prev, value: "" }))
-                }
-                className="transition-all border-none duration-400 ms-2 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
+            <div className="flex items-center w-1/2">
+              <select
+                onChange={handleFilterFieldChange}
+                value={filter.field}
+                className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
               >
-                ✕
-              </button>
-            )}
-          </div>
-
-
+                <option value="">חפש לפי</option>
+                <option value="mispar_ishi">מספר אישי</option>
+                <option value="tehudat_zehut">תעודת זהות</option>
+                <option value="full_name">שם מלא</option>
+                <option value="arrived">נוכחות</option>
+                <option value="date_arrived">תאריך הגעה</option>
+              </select>
+              <div className="flex items-center w-2/3">
+                <input
+                  type="text"
+                  value={filter.value}
+                  onChange={handleFilterChange}
+                  placeholder="הקלד ערך"
+                  className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full text-center"
+                />
+                <div
+                  className={`transition-opacity duration-400 ${
+                    filter.value ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <button
+                    onClick={() => setFilter((prev) => ({ ...prev, value: "" }))}
+                    className="bg-redConvinedStronger bg-opacity-55 border-transparent border-none text-white font-semibold rounded-full py-2 px-3 mr-2"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
             <div className="flex items-center w-1/2 justify-end">
               <select
                 onChange={(e) => handleSort(e.target.value)}
@@ -784,7 +788,7 @@ const filteredAttendees = attendees
                     direction: prev.direction === "asc" ? "desc" : "asc",
                   }))
                 }
-                className="text-sm transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full text-center h-16 w-16 flex flex-col justify-center items-center"
+                className="border-none hover:border-none text-sm transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full text-center h-16 w-16 flex flex-col justify-center items-center"
               >
                 {sort.direction === "asc" ? (
                   <>
@@ -800,8 +804,6 @@ const filteredAttendees = attendees
               </button>
             </div>
           </div>
-
-
 
         <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
           <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">

@@ -26,5 +26,5 @@ class Attendee(BaseModel):
             "tehudat_zehut": self.tehudat_zehut,
             "full_name": self.full_name,
             "arrived": self.arrived,
-            "date_arrived": self.date_arrived.strftime("%H:%M") if self.date_arrived is not None else None
+            "date_arrived": self.date_arrived.strftime("%Y-%m-%d %H:%M:%S") if self.date_arrived is not None else None
         }

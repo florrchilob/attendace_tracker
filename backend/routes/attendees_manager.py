@@ -46,7 +46,7 @@ async def get_clients():
         try:
             while True:
                 message = await queue.get()
-                print("envie bien, creo")
+                print("sent okey")
                 yield f"event: {message['action']}\ndata: {json.dumps(message['data'])}\n\n"
         except asyncio.CancelledError:
             print("error")
@@ -266,7 +266,7 @@ async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
     row_dict["date_arrived"] = row_dict["date_arrived"].strftime("%H:%M")
     message = {
             "action": "update",
-            "data": {"id": db_validation.id, "arrived": True}
+            "data": {"id": db_validation.id, "arrived": True, "date_arrived": formatted_date}
         }
     for queue in active_connections:
         try:

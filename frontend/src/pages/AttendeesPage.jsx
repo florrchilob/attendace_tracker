@@ -43,13 +43,22 @@ const AttendeesPage = () => {
     let eventSource = new EventSource(apiUrl+"/clients");
 
     eventSource.onmessage = (event) => {
-      console.log("Mensaje recibido: ", event.data);
+      console.log("Message received: ", event.data);
     };
   
     eventSource.addEventListener("create", (event) => {
       const data = JSON.parse(event.data);
-      console.log("Create recibido:", data);
-      setAttendees((prev) => [...prev, ...data.attendees]);
+      console.log("Create received (raw):", data);
+      const formattedAttendees = data.attendees.map((attendee) => ({
+        ...attendee,
+        dateArrived: attendee.dateArrived
+          ? formatDate(attendee.dateArrived)
+          : null, 
+      }));
+    
+      console.log("Create received (formatted):", formattedAttendees);
+    
+      setAttendees((prev) => [...prev, ...formattedAttendees]);
     });
 
     eventSource.addEventListener("update", (event) => {
@@ -57,7 +66,9 @@ const AttendeesPage = () => {
       console.log("Update received:", updatedAttendee);
       setAttendees((prev) =>
         prev.map((attendee) =>
-          attendee.id === updatedAttendee.id ? updatedAttendee : attendee
+          attendee.id === updatedAttendee.id
+            ? { ...attendee, ...updatedAttendee }
+            : attendee
         )
       );
     });
@@ -100,7 +111,7 @@ const AttendeesPage = () => {
     eventSource.onerror = (error) => {
       console.error("Error con SSE:", error);
       setTimeout(() => {
-        console.log("Intentando reconectar SSE...");
+        console.log("Trying to reconect  SSE...");
         eventSource = new EventSource(`${apiUrl}/clients`);
       }, 5000);
     };
@@ -117,24 +128,30 @@ const AttendeesPage = () => {
     try {
       const response = await fetch(`${apiUrl}/get`);
       const data = await response.json();
-      const attendees = data["data"]
+      const attendees = data["data"].map((attendee) => ({
+        ...attendee,
+        dateArrived: attendee.dateArrived
+          ? formatDate(attendee.dateArrived)
+          : null, 
+      }));
+  
       setAttendees(attendees);
     } catch (error) {
-      setLoading(null)
+      console.error("Error fetching attendees:", error);
+      setLoading(null);
     } finally {
       setLoading(false);
     }
   }
-
-  
-  const formatDate = (isoString) => {
+    
+  const formatDate = (isoString) => { 
     const date = new Date(isoString)
     const day = String(date.getDate()).padStart(2, "0")
     const month = String(date.getMonth() + 1).padStart(2, "0")
     const year = date.getFullYear()
     const hours = String(date.getHours()).padStart(2, "0")
     const minutes = String(date.getMinutes()).padStart(2, "0")
-  
+    console.log(`${day}/${month}/${year} ${hours}:${minutes}`)
     return `${day}/${month}/${year} ${hours}:${minutes}`
   };
 
@@ -289,117 +306,136 @@ const AttendeesPage = () => {
       })
       return jsonData 
   }
-  const handleImport = async(e, cameFrom = null) => {
+
+const handleImport = async (e, sent = null) => {
+  try {
     Swal.fire({
       title: "טוען...",
       html: "אנא המתן בזמן שהנתונים נטענים.",
       allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading()
-      },
+      didOpen: () => Swal.showLoading(),
       customClass: {
         popup: "custom-popup",
         title: "custom-title-success",
       },
     });
-    setFile(true);
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = async (event) => {
-    let jsonData = null
-    if (cameFrom === null){
-      jsonData = excelToJSON(event)
-    }
-    else{
-      
-    }
-    const toSend = { "attendees": jsonData };
-    console.log("toSend", toSend)
-      fetch(`${apiUrl}/create`, {
-        method: 'POST',
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(toSend)
-      })
-      .then(response => {
-        console.log("response" , response)
-        Swal.close();
-        console.log(response)
-        if (response.status === 500) {
-          Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "שגיאת שרת פנימית",
-            text: "נסה שוב מאוחר יותר",
-            showConfirmButton: false,
-            timer: 2500,
-            customClass: {
-              popup: "custom-popup-505",
-              title: "custom-popup-505-title"
-            },
-          });
-          throw new Error("Server error 500");
-        }
-        return response.json();
-      })
-      .then(dataResponse => {
-        fetchAttendees()
-        const missingData = dataResponse["data"]["missing_data"];
-        if (missingData.length > 0) {
-          Swal.fire({
-            position: "center",
-            icon: "warning",
-            title: "בדוק פרטים בבקשה",
-            text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
-            showConfirmButton: false,
-            timer: 2000,
-            customClass: {
-              popup: "custom-popup-505",
-              title: "custom-popup-505-title"
-            },
-          });
-          exportErrorsToExcel(missingData)
-        } else {
-          Swal.fire({
-            position: "center",
-            icon: "success",
-            title: "הנתונים נשמרו בהצלחה",
-            showConfirmButton: false,
-            timer: 2000,
-            customClass: {
-              popup: "custom-popup",
-              title: "custom-title-success",
-            },
-          });
-        }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-        Swal.fire({
-          position: "center",
-          icon: "error",
-          title: "שגיאת שרת פנימית",
-          text: "נסה שוב מאוחר יותר",
-          showConfirmButton: false,
-          timer: 2500,
-          customClass: {
-            popup: "custom-popup-505",
-            title: "custom-popup-505-title"
-          },
-        });
+
+    let jsonData = null;
+
+    if (sent === null) {
+      setFile(true);
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      jsonData = await new Promise((resolve, reject) => {
+        reader.onload = (event) => resolve(excelToJSON(event));
+        reader.onerror = (error) => reject(error);
+        reader.readAsArrayBuffer(file);
       });
-      };
-      
+    } else {
+      jsonData = sent;
+    }
+
+    await sendDataToAPI(jsonData);
+  } catch (error) {
+    console.error("Error in handleImport:", error);
+
+    Swal.fire({
+      position: "center",
+      icon: "error",
+      title: "שגיאה בלתי צפויה",
+      text: "נסה שוב מאוחר יותר",
+      showConfirmButton: false,
+      timer: 2500,
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title",
+      },
+    });
+  } finally {
     fetchAttendees();
     setTimeout(() => {
-        setAdding(false);
-        setAddingManual(false)
+      setAdding(false);
+      setAddingManual(false);
     }, 1000);
-    reader.readAsArrayBuffer(file);
-  };
+  }
+};
+
+const sendDataToAPI = async (data) => {
+  const toSend = { attendees: data };
+
+  try {
+    const response = await fetch(`${apiUrl}/create`, {
+      method: "POST",
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(toSend),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const dataResponse = await response.json();
+    handleAPIResponse(dataResponse);
+  } catch (error) {
+    console.error("Error in sendDataToAPI:", error);
+
+    Swal.fire({
+      position: "center",
+      icon: "error",
+      title: "שגיאת שרת פנימית",
+      text: "נסה שוב מאוחר יותר",
+      showConfirmButton: false,
+      timer: 2500,
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title",
+      },
+    });
+  }
+};
+
+const handleAPIResponse = (dataResponse) => {
+  const missingData = dataResponse?.data?.missing_data || [];
+
+  if (missingData.length > 0) {
+    Swal.fire({
+      position: "center",
+      icon: "warning",
+      title: "בדוק פרטים בבקשה",
+      text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
+      showConfirmButton: false,
+      timer: 2000,
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title",
+      },
+    });
+    exportErrorsToExcel(missingData);
+  } else {
+    Swal.fire({
+      position: "center",
+      icon: "success",
+      title: "הנתונים נשמרו בהצלחה",
+      showConfirmButton: false,
+      timer: 2000,
+      customClass: {
+        popup: "custom-popup",
+        title: "custom-title-success",
+      },
+    });
+  }
+};
+
+const handleManualSubmit = (newAttendee) => {
+  setAddingManual(false);
+  handleImport(null, newAttendee);
+};
+
+
   
   function exportToExcel() {
     if (!attendees || attendees.length === 0) {
@@ -425,22 +461,43 @@ const AttendeesPage = () => {
   }
 
   const handleRestartAttendace = async() => {
-    try { 
-      const response = await fetch(`${apiUrl}/restart`, {
-      method: 'PUT',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
+    Swal.fire({
+      title: "\u202Eהאם ברצונך לעדכן את כל המשתתפים כלא נוכחים?",
+      text: 'כתוב "restart" כדי לאשר את העדכון',
+      input: "text",
+      inputPlaceholder: '"restart" כתוב כאן',
+      showCancelButton: true,
+      confirmButtonText: "עדכן",
+      cancelButtonText: "ביטול",
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title"
+      },
+      preConfirm: (inputValue) => {
+        if (inputValue !== "restart") {
+          Swal.showValidationMessage('עליך לכתוב "restart" כדי לאשר את העדכון');
+          return false;
+        }
+        return true;
       }
-    });  
-      if(response.status === 500){
-        setLoading(null)
-      }
-    } catch (error) {
-      setLoading(null)
-    } finally {
-      fetchAttendees();
-    }
+    }).then(async (result) => {
+        try { 
+          const response = await fetch(`${apiUrl}/restart`, {
+          method: 'PUT',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          }
+        });  
+          if(response.status === 500){
+            setLoading(null)
+          }
+        } catch (error) {
+          setLoading(null)
+        } finally {
+          fetchAttendees();
+        }
+    })
   }
 
  
@@ -485,18 +542,6 @@ const filteredAttendees = attendees
       });
     }
   }, [filteredAttendees]);
-  
-  const handleManualSubmit = (newAttendee) => {
-    setAddingManual(false);
-    handleImport(null, newAttendee);
-    // setNewAttendee({
-    //   mispar_ishi: "",
-    //   tehudat_zehut: "",
-    //   full_name: "",
-    //   arrived: false,
-    //   date_arrived: "",
-    // });
-  };
 
   const MySwal = withReactContent(Swal);
 
@@ -506,11 +551,11 @@ const filteredAttendees = attendees
       html: `
         <div class="flex flex-col gap-4">
           <div class="flex flex-col">
-            <label for="full_name" class="text-white font-semibold">שם מלא *</label>
+            <label for="full_name" class="text-white font-semibold">שם *</label>
             <input
               id="full_name"
               type="text"
-              placeholder="הכנס שם מלא"
+              placeholder="הכנס שם"
               class="bg-gray-600 p-2 rounded focus:outline-none focus:ring-2 focus:ring-turquiseConvined"
             />
             <small class="text-redConvinedStronger mt-1">שדה זה חובה</small>
@@ -620,7 +665,8 @@ const filteredAttendees = attendees
     setFilter((prev) => {
       const shouldRetainValue =
         (prev.field === "tehudat_zehut" && newField === "mispar_ishi") ||
-        (prev.field === "mispar_ishi" && newField === "tehudat_zehut");
+        (prev.field === "mispar_ishi" && newField === "tehudat_zehut") ||
+        prev.value === "";
   
       return {
         ...prev,
@@ -629,6 +675,7 @@ const filteredAttendees = attendees
       };
     });
   };
+  
   
   
 
@@ -743,7 +790,7 @@ const filteredAttendees = attendees
                 <option value="">חפש לפי</option>
                 <option value="mispar_ishi">מספר אישי</option>
                 <option value="tehudat_zehut">תעודת זהות</option>
-                <option value="full_name">שם מלא</option>
+                <option value="full_name">שם</option>
                 <option value="arrived">נוכחות</option>
                 <option value="date_arrived">תאריך הגעה</option>
               </select>

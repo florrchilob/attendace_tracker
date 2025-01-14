@@ -60,6 +60,7 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 async def createattendees(sent: dict):
+    print(sent)
     if sent == None:
         return (to_return(400, 101))
     if "attendees" not in sent:

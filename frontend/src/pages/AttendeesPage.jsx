@@ -151,7 +151,6 @@ const AttendeesPage = () => {
     const year = date.getFullYear()
     const hours = String(date.getHours()).padStart(2, "0")
     const minutes = String(date.getMinutes()).padStart(2, "0")
-    console.log(`${day}/${month}/${year} ${hours}:${minutes}`)
     return `${day}/${month}/${year} ${hours}:${minutes}`
   };
 
@@ -339,7 +338,6 @@ const handleImport = async (e, sent = null) => {
     await sendDataToAPI(jsonData);
   } catch (error) {
     console.error("Error in handleImport:", error);
-
     Swal.fire({
       position: "center",
       icon: "error",
@@ -381,6 +379,7 @@ const sendDataToAPI = async (data) => {
     const dataResponse = await response.json();
     handleAPIResponse(dataResponse);
   } catch (error) {
+    console.log(error)
     console.error("Error in sendDataToAPI:", error);
 
     Swal.fire({

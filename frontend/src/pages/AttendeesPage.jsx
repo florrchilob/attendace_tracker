@@ -28,6 +28,18 @@ const AttendeesPage = () => {
   const [sort, setSort] = useState({ field: "", direction: "asc" })
   
   useEffect(() => {
+    Swal.fire({
+      title: "טוען...",
+      html: "אנא המתן בזמן שהנתונים נטענים.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+      customClass: {
+        popup: "custom-popup",
+        title: "custom-title-success",
+      },
+    });
     let eventSource = new EventSource(apiUrl+"/clients");
 
     eventSource.onmessage = (event) => {
@@ -94,7 +106,7 @@ const AttendeesPage = () => {
     };
     
     fetchAttendees();
-  
+    Swal.close();
       return () => {
         eventSource.close();
       };
@@ -218,28 +230,8 @@ const AttendeesPage = () => {
     XLSX.writeFile(workbook, "missing_data_errors.xlsx", { bookType: "xlsx", type: "binary" });
   };
 
-
-  const handleImport = async(e, cameFrom = null) => {
-    Swal.fire({
-      title: "טוען...",
-      html: "אנא המתן בזמן שהנתונים נטענים.",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading()
-      },
-      customClass: {
-        popup: "custom-popup",
-        title: "custom-title-success",
-      },
-    });
-    setFile(true);
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = async (event) => {
-    if (cameFrom != null){
-      
-      const data = new Uint8Array(event.target.result);
+  const excelToJSON = (event) => {
+    const data = new Uint8Array(event.target.result);
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
@@ -295,9 +287,32 @@ const AttendeesPage = () => {
          
         return newRow;
       })
+      return jsonData 
+  }
+  const handleImport = async(e, cameFrom = null) => {
+    Swal.fire({
+      title: "טוען...",
+      html: "אנא המתן בזמן שהנתונים נטענים.",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      },
+      customClass: {
+        popup: "custom-popup",
+        title: "custom-title-success",
+      },
+    });
+    setFile(true);
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+    let jsonData = null
+    if (cameFrom === null){
+      jsonData = excelToJSON(event)
     }
-
-      const toSend = { "attendees": jsonData };
+    const toSend = { "attendees": jsonData };
+    console.log("toSend", toSend)
       fetch(`${apiUrl}/create`, {
         method: 'POST',
         headers: {
@@ -307,7 +322,9 @@ const AttendeesPage = () => {
         body: JSON.stringify(toSend)
       })
       .then(response => {
+        console.log("response" , response)
         Swal.close();
+        console.log(response)
         if (response.status === 500) {
           Swal.fire({
             position: "center",
@@ -591,6 +608,34 @@ const filteredAttendees = attendees
     });
   };
   
+  const handleFilterChange = (e) => {
+    setFilter((prev) => ({ ...prev, value: e.target.value.toLowerCase() }));
+  };
+  
+  const handleFilterFieldChange = (e) => {
+    const newField = e.target.value;
+  
+    setFilter((prev) => {
+      const shouldRetainValue =
+        (prev.field === "tehudat_zehut" && newField === "mispar_ishi") ||
+        (prev.field === "mispar_ishi" && newField === "tehudat_zehut");
+  
+      return {
+        ...prev,
+        field: newField,
+        value: shouldRetainValue ? prev.value : "",
+      };
+    });
+  };
+  
+  
+
+  const handleSort = (field) => {
+    setSort((prev) => ({
+      field,
+      direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
   
   
   return (
@@ -686,6 +731,78 @@ const filteredAttendees = attendees
             </div>
           </div>
         </div>
+          <div className="flex flex-row w-full mb-4 mt-6 justify-between px-80">
+          <div className="flex items-center w-1/2">
+            <select
+              onChange={handleFilterFieldChange}
+              value={filter.field}
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
+            >
+              <option value="">חפש לפי</option>
+              <option value="mispar_ishi">מספר אישי</option>
+              <option value="tehudat_zehut">תעודת זהות</option>
+              <option value="full_name">שם מלא</option>
+              <option value="arrived">נוכחות</option>
+              <option value="date_arrived">תאריך הגעה</option>
+            </select>
+            <input
+              type="text"
+              value={filter.value}
+              onChange={handleFilterChange}
+              placeholder="הקלד ערך"
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-2/3 text-center"
+            />
+            {filter.value && (
+              <button
+                onClick={() =>
+                  setFilter((prev) => ({ ...prev, value: "" }))
+                }
+                className="transition-all border-none duration-400 ms-2 bg-redConvinedStronger hover:bg-red-700 text-white font-semibold rounded-full py-2 px-3"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+
+            <div className="flex items-center w-1/2 justify-end">
+              <select
+                onChange={(e) => handleSort(e.target.value)}
+                className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
+              >
+                <option value="">מיין לפי</option>
+                <option value="mispar_ishi">מספר אישי</option>
+                <option value="tehudat_zehut">תעודת זהות</option>
+                <option value="full_name">שם</option>
+                <option value="arrived">נוכחות</option>
+                <option value="date_arrived">תאריך הגעה</option>
+              </select>
+              <button
+                onClick={() =>
+                  setSort((prev) => ({
+                    ...prev,
+                    direction: prev.direction === "asc" ? "desc" : "asc",
+                  }))
+                }
+                className="text-sm transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full text-center h-16 w-16 flex flex-col justify-center items-center"
+              >
+                {sort.direction === "asc" ? (
+                  <>
+                    <span>סדר</span>
+                    <span>עולה</span>
+                  </>
+                ) : (
+                  <>
+                    <span>סדר</span>
+                    <span>יורד</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+
+
         <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
           <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
             <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">

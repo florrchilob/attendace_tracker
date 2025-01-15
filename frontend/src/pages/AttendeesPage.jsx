@@ -688,22 +688,37 @@ const filteredAttendees = attendees
   const handleManualSubmit = async() => {
     if (!manual.full_name || manual.full_name.trim() === "") {
       setVibrate(true);
+      setTimeout(() => {
+        setVibrate(false);
+      }, 500);
       return;
     }
     if (!manual.tehudat_zehut && !manual.mispar_ishi) {
       setVibrate(true);
+      setTimeout(() => {
+        setVibrate(false);
+      }, 500);
       return;
     }
     if (manual.tehudat_zehut && (!/^\d{9}$/.test(manual.tehudat_zehut))) {
       setVibrate(true);
+      setTimeout(() => {
+        setVibrate(false);
+      }, 500);
       return;
     }
     if (manual.mispar_ishi && (!/^\d{6,}$/.test(manual.mispar_ishi))) {
       setVibrate(true);
+      setTimeout(() => {
+        setVibrate(false);
+      }, 500);
       return;
     }
     if (manual.arrived === true && (!manual.date_arrived || manual.date_arrived.trim() === "")) {
       setVibrate(true);
+      setTimeout(() => {
+        setVibrate(false);
+      }, 500);
       return;
     }
 

@@ -362,11 +362,11 @@ const handleImport = async (e, sent = null) => {
       },
     });
   } finally {
-    fetchAttendees();
-    setTimeout(() => {
-      setAdding(false);
-      setAddingManual(false);
-    }, 1000);
+    if (sent === null){
+      fetchAttendees();
+    }
+    setAdding(false);
+    setAddingManual(false);
   }
 };
 
@@ -389,7 +389,6 @@ const sendDataToAPI = async (data) => {
     handleAPIResponse(dataResponse);
   } catch (error) {
     console.error("Error in sendDataToAPI:", error);
-
     Swal.fire({
       position: "center",
       icon: "error",
@@ -440,7 +439,17 @@ const handleAPIResponse = (dataResponse) => {
 
   function exportToExcel() {
     if (!attendees || attendees.length === 0) {
-      alert("אין נתונים לייצוא.");
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "אין נתונים לייצוא.",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });
       return;
     }
   
@@ -453,11 +462,9 @@ const handleAPIResponse = (dataResponse) => {
         ? formatDate(attendee.date_arrived)
         : "—"
     }));
-  
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "משתתפים");
-  
     XLSX.writeFile(workbook, "רשימת_משתתפים.xlsx");
   }
 
@@ -574,42 +581,64 @@ const filteredAttendees = attendees
     }));
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async() => {
     if (!manual.full_name || manual.full_name.trim() === "") {
       setVibrate(true);
       return;
     }
-
     if (!manual.tehudat_zehut && !manual.mispar_ishi) {
       setVibrate(true);
       return;
     }
-
     if (manual.tehudat_zehut && (!/^\d{9}$/.test(manual.tehudat_zehut))) {
       setVibrate(true);
       return;
     }
-
     if (manual.mispar_ishi && (!/^\d{6,}$/.test(manual.mispar_ishi))) {
       setVibrate(true);
       return;
     }
-    
-
     if (manual.arrived === true && (!manual.date_arrived || manual.date_arrived.trim() === "")) {
       setVibrate(true);
       return;
     }
 
+    const isDuplicate = attendees.some(
+      (attendee) =>
+        (manual.tehudat_zehut && attendee.tehudat_zehut === manual.tehudat_zehut) ||
+        (manual.mispar_ishi && attendee.mispar_ishi === manual.mispar_ishi)
+    );
+    
+    if (isDuplicate) {
+      setVibrate(true);
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "תעודת זהות או מספר אישי כבר קיימים ברשימה.",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });
+      return;
+    }
     setVibrate(true);
     setTimeout(() => {
       setVibrate(false);
     }, 500);
 
-    console.log(manual)
-    
+    await handleImport(null, manual)
+
+    setManual({
+      mispar_ishi: "",
+      tehudat_zehut: "",
+      full_name: "",
+      arrived: false,
+      date_arrived: ""
+    })
   };
-  
   
   return (
     <div
@@ -890,6 +919,8 @@ const filteredAttendees = attendees
                           <option value={false}>לא</option>
                           <option value={true}>כן</option>
                         </select>
+                        <div className="h-3">
+                        </div>
                     </td>
                     <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
                       {
@@ -917,7 +948,7 @@ const filteredAttendees = attendees
                       }
                     </td>
                     <td className="transition-all duration-400 px-4 py-2 text-center">
-                      <button onClick={handleManualSubmit} className="text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
+                      <button onClick={handleManualSubmit} className="focus:outline-greenConvined text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
                     </td>
                   </tr>
               }

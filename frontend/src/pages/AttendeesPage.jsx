@@ -575,11 +575,39 @@ const filteredAttendees = attendees
   };
 
   const handleManualSubmit = () => {
+    if (!manual.full_name || manual.full_name.trim() === "") {
+      setVibrate(true);
+      return;
+    }
+
+    if (!manual.tehudat_zehut && !manual.mispar_ishi) {
+      setVibrate(true);
+      return;
+    }
+
+    if (manual.tehudat_zehut && (!/^\d{9}$/.test(manual.tehudat_zehut))) {
+      setVibrate(true);
+      return;
+    }
+
+    if (manual.mispar_ishi && (!/^\d{6,}$/.test(manual.mispar_ishi))) {
+      setVibrate(true);
+      return;
+    }
+    
+
+    if (manual.arrived === true && (!manual.date_arrived || manual.date_arrived.trim() === "")) {
+      setVibrate(true);
+      return;
+    }
+
     setVibrate(true);
     setTimeout(() => {
       setVibrate(false);
     }, 500);
-  
+
+    console.log(manual)
+    
   };
   
   
@@ -775,7 +803,7 @@ const filteredAttendees = attendees
               {
                 addingManual &&
                 <tr
-                    className="transition-all duration-400 border-b h-14 border-gray-600 hover:bg-gray-600"
+                    className="transition-all duration-400 border-b h-14 border-gray-600"
                   >
                     <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
                       <input
@@ -791,7 +819,15 @@ const filteredAttendees = attendees
                             <small className={`block text-[10px] text-redConvinedStronger ${
                               vibrate === true ? "animate-vibrate" : ""
                             }`}>
-                              * שדה זה חובה
+                            *  מ.א או ת.ז חובה
+                            </small>
+                        }
+                        {
+                          manual.mispar_ishi !== "" && (manual.mispar_ishi && (!/^\d{6,}$/.test(manual.mispar_ishi))) &&
+                            <small className={`block text-[10px] text-redConvinedStronger ${
+                              vibrate === true ? "animate-vibrate" : ""
+                            }`}>
+                              * המ.א חייב להיות בעל 6 ספרות לפחות
                             </small>
                         }
                       </div>
@@ -806,11 +842,19 @@ const filteredAttendees = attendees
                       />   
                       <div className="h-3">
                         {
-                          manual.mispar_ishi === "" && manual.tehudat_zehut === "" &&
+                          manual.tehudat_zehut === "" && manual.mispar_ishi === "" &&
                           <small className={`block text-[10px] text-redConvinedStronger ${
                             vibrate === true ? "animate-vibrate" : ""
                           }`}>
                             * ת.ז או מ.א חובה
+                          </small>
+                        }
+                        {
+                          manual.tehudat_zehut !== "" && (manual.tehudat_zehut && (!/^\d{9}$/.test(manual.tehudat_zehut))) &&
+                          <small className={`block text-[10px] text-redConvinedStronger ${
+                            vibrate === true ? "animate-vibrate" : ""
+                          }`}>
+                            *  הת.ז חייבת להיות בת 9 ספרות
                           </small>
                         }
                       </div>   

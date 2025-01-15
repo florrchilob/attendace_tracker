@@ -60,6 +60,7 @@ def home():
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 async def createattendees(sent: dict):
+    print(sent)
     if sent == None:
         return (to_return(400, 101))
     if "attendees" not in sent:
@@ -217,7 +218,7 @@ def delete_attendee(id: int, testing: str = None):
         return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
-def logic_delete_attendee(id: int, testing: dict):
+async def logic_delete_attendee(id: int, testing: dict):
     db_validation = db_validating({"type": 2, "id": id})
     if db_validation == "error":
         return (500, 99)
@@ -228,6 +229,15 @@ def logic_delete_attendee(id: int, testing: dict):
         return (500, 99)
     if db_delete != True:
         return (500, 9)
+        message = {
+            "action": "delete_user",
+            "data": {"id": id}
+        }
+    for queue in active_connections:
+        try:
+            await queue.put(message)
+        except Exception as e:
+            logging.error(f"Error sending the message: {e}")
     return(200, 0)
 
 @attendees_route.put("/arrived")

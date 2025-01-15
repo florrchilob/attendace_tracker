@@ -240,6 +240,80 @@ const AttendeesPage = () => {
     });
   };
 
+  const handleDeleteUser = async(id) => {
+    Swal.fire({
+      title: "האם ברצונך למחוק את כל המשתתפים?",
+      text: '"delete"' + ' כדי לאשר למחוק כתוב' ,
+      input: "text",
+      inputPlaceholder: '"delete" כתוב  כאן',
+      showCancelButton: true,
+      confirmButtonText: "מחק",
+      cancelButtonText: "ביטול",
+      customClass: {
+        popup: "custom-popup-505",
+        title: "custom-popup-505-title"
+      },
+      preConfirm: (inputValue) => {
+        if (inputValue !== "delete") {
+          Swal.showValidationMessage('עליך לכתוב "delete" כדי לאשר את המחיקה');
+          return false;
+        }
+        return true;
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        let response = await fetch(`${apiUrl}/delete/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          }
+        });
+    
+        if (response.status === 200) {
+          setAttendees((prev) => prev.filter((attendee) => attendee.id !== id));
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "המשתתף הורס בהצלחה",
+            timer: 2500,
+            showConfirmButton: false,
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          })
+        }
+        else{
+          Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "שגיאת שרת פנימית",
+            text: "נסה שוב מאוחר יותר",
+            showConfirmButton: false,
+            timer: 2500,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title"          
+            },
+          })
+        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        Swal.fire({
+          position: "center",
+          icon: "info",
+          title: "המחיקה בוטלה",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title"          
+          },
+        })
+      }
+    });
+  };
+
   const exportErrorsToExcel = (missingData) => {
     const formattedData = missingData.map((item) => ({
       "מספר אישי": item.attendee.mispar_ishi || "",
@@ -406,33 +480,50 @@ const sendDataToAPI = async (data) => {
 
 const handleAPIResponse = (dataResponse) => {
   const missingData = dataResponse?.data?.missing_data || [];
-
-  if (missingData.length > 0) {
-    Swal.fire({
-      position: "center",
-      icon: "warning",
-      title: "בדוק פרטים בבקשה",
-      text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
-      showConfirmButton: false,
-      timer: 2000,
-      customClass: {
-        popup: "custom-popup-505",
-        title: "custom-popup-505-title",
-      },
-    });
-    exportErrorsToExcel(missingData);
-  } else {
-    Swal.fire({
-      position: "center",
-      icon: "success",
-      title: "הנתונים נשמרו בהצלחה",
-      showConfirmButton: false,
-      timer: 2000,
-      customClass: {
-        popup: "custom-popup",
-        title: "custom-title-success",
-      },
-    });
+  if (dataResponse.error_code){
+    if (dataResponse.error_code===101){
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שגיאת שרת פנימית",
+        text: "נסה שוב מאוחר יותר",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });
+    }
+  }
+  else{
+    if (missingData.length > 0) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "בדוק פרטים בבקשה",
+        text: "בדוק את תיקיית ההורדות, הורד אקסל עם המשתמשים שיש להם שגיאות, אנא תקן את הנתונים שהוזנו עבור כל משתתף",
+        showConfirmButton: false,
+        timer: 2000,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });
+      exportErrorsToExcel(missingData);
+    } else {
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "הנתונים נשמרו בהצלחה",
+        showConfirmButton: false,
+        timer: 2000,
+        customClass: {
+          popup: "custom-popup",
+          title: "custom-title-success",
+        },
+      });
+    }
   }
 };
 
@@ -628,8 +719,12 @@ const filteredAttendees = attendees
     setTimeout(() => {
       setVibrate(false);
     }, 500);
-
-    await handleImport(null, manual)
+    
+    const cleanManual = Object.fromEntries(
+      Object.entries(manual).filter(([key, value]) => value !== "" && value !== null && value !== undefined)
+    );
+    
+    await handleImport(null, [cleanManual]);
 
     setManual({
       mispar_ishi: "",
@@ -973,7 +1068,7 @@ const filteredAttendees = attendees
                     {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
                   </td>
                   <td className="flex transition-all duration-400 text-lg gap-10 justify-center">
-                    <button className="text-sm text-white rounded-md hover:border-redConvinedStronger p-1 my-1"><DeleteUserLogo/></button>
+                    <button className="text-sm text-white rounded-md hover:border-redConvinedStronger p-1 my-1" onClick={() => handleDeleteUser(attendee.id)}><DeleteUserLogo/></button>
                     <button className="text-sm text-white rounded-md hover:border-yellowConvined p-1 my-1"> <EditLogo/> </button>
                   </td>
                 </tr>

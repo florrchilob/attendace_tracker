@@ -807,28 +807,82 @@ const filteredAttendees = attendees
       return;
     }
   
-    const originalData = attendees.find(attendee => attendee.id === editingId);
-
+    const originalData = attendees.find((attendee) => attendee.id === editingId);
+  
     if (!originalData) {
       console.error("Original data not found");
       return;
     }
-
-    const changes = {};
-    Object.keys(editData).forEach(key => {
+  
+    const isDuplicate = attendees.some(
+      (attendee) =>
+        attendee.id !== editingId && // Excluir el registro actual que se está editando
+        ((editData.tehudat_zehut && attendee.tehudat_zehut === editData.tehudat_zehut) ||
+          (editData.mispar_ishi && attendee.mispar_ishi === editData.mispar_ishi))
+    );
+  
+    if (isDuplicate) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "תעודת זהות או מספר אישי כבר קיימים ברשימה",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+  
+    const changes = { id: editingId };
+    Object.keys(editData).forEach((key) => {
       if (editData[key] !== originalData[key]) {
         changes[key] = editData[key];
       }
     });
-
-    if (Object.keys(changes).length === 0) {
+  
+    if (Object.keys(changes).length === 1) { // Solo contiene el ID
       console.log("No changes were made.");
+      return;
     }
-    else
-    {
-      console.log(changes)
+  
+    try {
+      const response = await fetch(`${apiUrl}/edit`, {
+        method: "PUT",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(changes),
+      });
+  
+      if (response.status === 500) {
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title",
+          },
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שגיאת שרת פנימית",
+        text: "נסה שוב מאוחר יותר",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });
     }
-
+  
     setAttendees((prev) =>
       prev.map((attendee) =>
         attendee.id === editingId ? { ...attendee, ...editData } : attendee
@@ -837,6 +891,7 @@ const filteredAttendees = attendees
     setEditingId(null);
     setEditData({});
   };
+  
   
 
   return (

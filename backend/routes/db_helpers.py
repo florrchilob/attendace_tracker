@@ -81,7 +81,7 @@ def db_deleting(to_delete):
     else:
         id_to_delete = to_delete.get("id")
         try:
-            query = table.delete().where(table.c.id == id)
+            query = table.delete().where(table.c.id == id_to_delete)
             response = session.execute(query)
             if response.rowcount >= 1:
                 session.commit()

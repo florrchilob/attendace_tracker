@@ -211,14 +211,14 @@ def logic_edit_attendee(attendee_to_edit, testing):
     return (200, 0)
 
 @attendees_route.delete("/delete/{id}")
-def delete_attendee(id: int, testing: str = None):
+async def delete_attendee(id: int, testing: str = None):
     validation = sends_validate({"id": id}, ["id"])
     if validation == True:
-        response = logic_delete_attendee(id, testing)
+        response = await logic_delete_attendee(id, testing)
         return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
-def logic_delete_attendee(id: int, testing: dict):
+async def logic_delete_attendee(id: int, testing: dict):
     db_validation = db_validating({"type": 2, "id": id})
     if db_validation == "error":
         return (500, 99)
@@ -235,7 +235,7 @@ def logic_delete_attendee(id: int, testing: dict):
     }
     for queue in active_connections:
         try:
-            queue.put(message)
+            await queue.put(message)
         except Exception as e:
             logging.error(f"Error sending the message: {e}")
     return(200, 0)

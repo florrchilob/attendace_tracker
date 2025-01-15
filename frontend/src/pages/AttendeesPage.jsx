@@ -19,6 +19,14 @@ const AttendeesPage = () => {
   const [file, setFile] = useState(null);
   const [addingManual, setAddingManual] = useState(false);
   const [vibrate, setVibrate] = useState(false)
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({
+    mispar_ishi: "",
+    tehudat_zehut: "",
+    full_name: "",
+    arrived: false,
+    date_arrived: ""
+  });
   const [manual, setManual] = useState({
     mispar_ishi: "",
     tehudat_zehut: "",
@@ -85,9 +93,8 @@ const AttendeesPage = () => {
     });
 
     eventSource.addEventListener("delete_user", (event) => {
-      const idUserDelete = JSON.parse(event.data);
-      console.log("Delete user received:", idUserDelete);
-      setAttendees((prev) => prev.filter((attendee) => attendee.id !== idUserDelete));
+      const idUserDelete = JSON.parse(event.data).id;    
+      setAttendees((prev) => prev.filter((attendee) => attendee.id !== idUserDelete));    
     });
 
     eventSource.addEventListener("restart_all", () => {
@@ -741,6 +748,81 @@ const filteredAttendees = attendees
     })
   };
   
+
+  const handleEdit = (id) => {
+    const attendeeToEdit = attendees.find((attendee) => attendee.id === id);
+    setEditingId(id);
+    setEditData(attendeeToEdit);
+  };
+  
+  const handleEditSubmit = async () => {
+    if (!editData.full_name || editData.full_name.trim() === "") {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שם מלא הוא שדה חובה",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    if (!editData.tehudat_zehut && !editData.mispar_ishi) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "תעודת זהות או מספר אישי הם שדות חובה",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    if (editData.tehudat_zehut && (!/^\d{9}$/.test(editData.tehudat_zehut))) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "תעודת הזהות חייבת להיות בת 9 ספרות",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    if (editData.mispar_ishi && (!/^\d{6,}$/.test(editData.mispar_ishi))) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "המספר האישי חייב להיות בעל 6 ספרות לפחות",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+    if (editData.arrived === true && (!editData.date_arrived || editData.date_arrived.trim() === "")) {
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שדה תאריך הגעה הוא חובה",
+        showConfirmButton: false,
+        timer: 2500,
+      });
+      return;
+    }
+  
+    console.log(editData)
+    // llamar api aca
+    setAttendees((prev) =>
+      prev.map((attendee) =>
+        attendee.id === editingId ? { ...attendee, ...editData } : attendee
+      )
+    );
+    setEditingId(null);
+    setEditData({});
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditData({});
+  };
+
   return (
     <div
       dir="rtl"
@@ -1054,30 +1136,100 @@ const filteredAttendees = attendees
                   </tr>
               }
               {filteredAttendees.map((attendee, index) => (
-                <tr
-                  key={index}
-                  className="transition-all duration-400 border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
-                >
-                  <td className="transition-all duration-400 px-4 py-2 text-limeConvined text-lg text-center">
-                    {attendee.mispar_ishi}
-                  </td>
-                  <td className="transition-all duration-400 px-4 py-2 text-turquiseConvined text-lg text-center">
-                    {attendee.tehudat_zehut}
-                  </td>
-                  <td className="transition-all duration-400 px-4 py-2 text-greenConvined text-lg text-center">
-                    {attendee.full_name}
-                  </td>
-                  <td className="transition-all duration-400 px-4 py-2 text-lavanderConvined text-lg text-center">
-                    {attendee.arrived ? "כן" : "לא"}
-                  </td>
-                  <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
-                    {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
-                  </td>
-                  <td className="flex transition-all duration-400 text-lg gap-10 justify-center">
-                    <button className="text-sm text-white rounded-md hover:border-redConvinedStronger p-1 my-1" onClick={() => handleDeleteUser(attendee.id)}><DeleteUserLogo/></button>
-                    <button className="text-sm text-white rounded-md hover:border-yellowConvined p-1 my-1"> <EditLogo/> </button>
-                  </td>
-                </tr>
+                (editingId !== attendee.id ?
+                  (
+                    <tr
+                      key={index}
+                      className="transition-all duration-400 border-b bg-gray-800 border-gray-600 hover:bg-gray-600"
+                    >
+                      <td className="transition-all duration-400 px-4 py-2 text-limeConvined text-lg text-center">
+                        {attendee.mispar_ishi}
+                      </td>
+                      <td className="transition-all duration-400 px-4 py-2 text-turquiseConvined text-lg text-center">
+                        {attendee.tehudat_zehut}
+                      </td>
+                      <td className="transition-all duration-400 px-4 py-2 text-greenConvined text-lg text-center">
+                        {attendee.full_name}
+                      </td>
+                      <td className="transition-all duration-400 px-4 py-2 text-lavanderConvined text-lg text-center">
+                        {attendee.arrived ? "כן" : "לא"}
+                      </td>
+                      <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
+                        {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
+                      </td>
+                      <td className="flex transition-all duration-400 text-lg gap-10 justify-center">
+                        <button className="text-sm text-white rounded-md hover:border-redConvinedStronger p-1 my-1" onClick={() => handleDeleteUser(attendee.id)}><DeleteUserLogo/></button>
+                        <button className="text-sm text-white rounded-md hover:border-yellowConvined p-1 my-1" onClick={() => handleEdit(attendee.id)}> <EditLogo/> </button>
+                      </td>
+                    </tr>
+                  ):
+                  (
+                    <tr
+                      className="transition-all duration-400 border-b border-gray-600"
+                      key={index}
+                    >
+                    <td className="transition-all justify-center mx-auto duration-400 text-center">
+                      <input
+                        type="number"
+                        value={editData.mispar_ishi || ""}
+                        onChange={(e) => setEditData((prev) => ({ ...prev, mispar_ishi: e.target.value }))}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        className="transition-all duration-400 mt-2 mb-1 bg-white text-center text-black focus:outline-limeConvined rounded-sm hover:shadow-[0_0_10px_rgba(174,247,142,1)]"
+                      />
+                    </td>
+                    <td className="transition-all justify-center mx-auto duration-400 text-center">
+                      <input
+                        type="text"
+                        value={editData.tehudat_zehut || ""}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        onChange={(e) => setEditData((prev) => ({ ...prev, tehudat_zehut: e.target.value }))}
+                        className="transition-all duration-400 mt-2 mb-1 bg-white text-black text-center focus:outline-turquiseConvined  rounded-sm hover:shadow-[0_0_10px_rgba(141,247,246,1)]"
+                      />   
+                    </td>
+                    <td className="transition-all justify-center mx-auto duration-400 text-center">
+                      <input
+                        type="text"
+                        value={editData.full_name || ""}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        onChange={(e) => setEditData((prev) => ({ ...prev, full_name: e.target.value }))}
+                        className="transition-all mt-2 mb-1 duration-400 bg-white roundee text-center focus:outline-greenConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,249,176,1)]"
+                      />
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
+                        <select
+                          onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                              arrived: JSON.parse(e.target.value),
+                            }))
+                          }  
+                          value={editData.arrived || false}                        
+                          className="duration-400 mx-2 text-center transition-all duration-400 bg-white focus:outline-lavanderConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,145,247,1)]"
+                        >   
+                          <option value={false}>לא</option>
+                          <option value={true}>כן</option>
+                        </select>
+                    </td>
+                    <td className="transition-all justify-center mx-auto duration-400 text-center">
+                      {
+                        editData.arrived === true &&
+                        <div>
+                          <input
+                            type="date"
+                            value={editData.date_arrived || ""}
+                            onChange={(e) => setEditData((prev) => ({ ...prev, date_arrived: e.target.value }))}
+                            placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                            className="transition-all mt-2 mb-1 duration-400 bg-white text-center focus:outline-pinkConvined rounded-sm hover:shadow-[0_0_10px_rgba(242,141,247,1)]"
+                            />                       
+                      </div>
+                      }
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-center">
+                      <button onClick={handleEditSubmit} className="focus:outline-greenConvined text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  לשלוח </button>         
+                    </td>
+                  </tr>
+                  )
+                )
               ))}
             </tbody>
           </table>

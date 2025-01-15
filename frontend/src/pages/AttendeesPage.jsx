@@ -84,6 +84,12 @@ const AttendeesPage = () => {
       );
     });
 
+    eventSource.addEventListener("delete_user", (event) => {
+      const idUserDelete = JSON.parse(event.data);
+      console.log("Delete user received:", idUserDelete);
+      setAttendees((prev) => prev.filter((attendee) => attendee.id !== idUserDelete));
+    });
+
     eventSource.addEventListener("restart_all", () => {
       console.log("Reset all arrived received");
       Swal.fire({
@@ -719,7 +725,7 @@ const filteredAttendees = attendees
     setTimeout(() => {
       setVibrate(false);
     }, 500);
-    
+
     const cleanManual = Object.fromEntries(
       Object.entries(manual).filter(([key, value]) => value !== "" && value !== null && value !== undefined)
     );

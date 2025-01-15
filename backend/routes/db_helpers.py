@@ -61,21 +61,36 @@ def db_validating(to_validate, testing = None):
             return "error"
 
 def db_deleting(to_delete):
+    type_delete = to_delete.get("type")
     global session
     if session is None:
         db_open_session()
     table = to_delete.get("table")
-    try:
-        query = table.delete()
-        response = session.execute(query)
-        if response.rowcount >= 1:
-            session.commit()
-            return True
-        else:
-            return False
-    except: 
-        session.rollback()
-        return "error"
+    if type_delete == 1:
+        try:
+            query = table.delete()
+            response = session.execute(query)
+            if response.rowcount >= 1:
+                session.commit()
+                return True
+            else:
+                return False
+        except: 
+            session.rollback()
+            return "error"
+    else:
+        id_to_delete = to_delete.get("id")
+        try:
+            query = table.delete().where(table.c.id == id)
+            response = session.execute(query)
+            if response.rowcount >= 1:
+                session.commit()
+                return True
+            else:
+                return False
+        except: 
+            session.rollback()
+            return "error"
 
 def db_saving(to_save, table, testing = None):
     global session

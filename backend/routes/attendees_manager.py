@@ -218,24 +218,24 @@ def delete_attendee(id: int, testing: str = None):
         return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
-async def logic_delete_attendee(id: int, testing: dict):
+def logic_delete_attendee(id: int, testing: dict):
     db_validation = db_validating({"type": 2, "id": id})
     if db_validation == "error":
         return (500, 99)
     if db_validation == False:
         return (400, 102)
-    db_delete = db_deleting({"id": id, "table": attendees})
+    db_delete = db_deleting({"type": 2, "id": id, "table": attendees})
     if db_delete == "error":
         return (500, 99)
     if db_delete != True:
         return (500, 9)
-        message = {
-            "action": "delete_user",
-            "data": {"id": id}
-        }
+    message = {
+        "action": "delete_user",
+        "data": {"id": id}
+    }
     for queue in active_connections:
         try:
-            await queue.put(message)
+            queue.put(message)
         except Exception as e:
             logging.error(f"Error sending the message: {e}")
     return(200, 0)
@@ -304,7 +304,7 @@ async def restart_attendace():
 
 @attendees_route.delete("/deleteall")
 async def delete_all_attendees():
-    response = db_deleting({"table": attendees})
+    response = db_deleting({"type": 1, "table": attendees})
     if response == "error":
         return to_return(500, 99)
     message = {

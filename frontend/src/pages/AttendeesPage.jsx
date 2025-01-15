@@ -18,6 +18,7 @@ const AttendeesPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [file, setFile] = useState(null);
   const [addingManual, setAddingManual] = useState(false);
+  const [vibrate, setVibrate] = useState(false)
   const [manual, setManual] = useState({
     mispar_ishi: "",
     tehudat_zehut: "",
@@ -436,13 +437,7 @@ const handleAPIResponse = (dataResponse) => {
   }
 };
 
-const handleManualSubmit = (newAttendee) => {
-  setAddingManual(false);
-  handleImport(null, newAttendee);
-};
 
-
-  
   function exportToExcel() {
     if (!attendees || attendees.length === 0) {
       alert("אין נתונים לייצוא.");
@@ -579,9 +574,14 @@ const filteredAttendees = attendees
     }));
   };
 
-  // const handleAddingManual = () => {
-  //   setAddingManual(true)
-  // }
+  const handleManualSubmit = () => {
+    setVibrate(true);
+    setTimeout(() => {
+      setVibrate(false);
+    }, 500);
+  
+  };
+  
   
   return (
     <div
@@ -767,64 +767,113 @@ const filteredAttendees = attendees
                 <th className="px-4 py-2 text-center">תעודת זהות</th>
                 <th className="px-4 py-2 text-center">שם</th>
                 <th className="px-4 py-2 text-center">נוכחות</th>
-                <th className="px-4 py-2 text-center">תאריך הגעה</th>                
+                <th className="px-4 py-2 text-center w-48">תאריך הגעה</th>                
                 <th className="py-2 text-center">פעולות עם <br/> המשתמש היחיד</th>
-
               </tr>
             </thead>
             <tbody>
               {
                 addingManual &&
                 <tr
-                    className="transition-all duration-400 border-b  border-gray-600 hover:bg-gray-600"
+                    className="transition-all duration-400 border-b h-14 border-gray-600 hover:bg-gray-600"
                   >
-                    <td className="transition-all duration-400 text-center ">
+                    <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
                       <input
-                        type="num"
+                        type="number"
                         value={manual.mispar_ishi}
-                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                        onChange={(e) => setManual((prev) => ({ ...prev, mispar_ishi: e.target.value }))}
                         placeholder={placeholderMap[filter.field] || "משתתף חדש"}
-                        className="transition-all duration-400 bg-white text-center text-black focus:outline-limeConvined rounded-sm hover:shadow-[0_0_10px_rgba(174,247,142,1)]"
+                        className="transition-all duration-400 mt-2 mb-1 bg-white text-center text-black focus:outline-limeConvined rounded-sm hover:shadow-[0_0_10px_rgba(174,247,142,1)]"
                       />
+                      <div className="h-3">
+                        {
+                          manual.mispar_ishi === "" && manual.tehudat_zehut === "" &&
+                            <small className={`block text-[10px] text-redConvinedStronger ${
+                              vibrate === true ? "animate-vibrate" : ""
+                            }`}>
+                              * שדה זה חובה
+                            </small>
+                        }
+                      </div>
                     </td>
-                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
+                    <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
                       <input
                         type="text"
                         value={manual.tehudat_zehut}
                         placeholder={placeholderMap[filter.field] || "משתתף חדש"}
-                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
-                        className="transition-all duration-400 bg-white text-center focus:outline-turquiseConvined  rounded-sm hover:shadow-[0_0_10px_rgba(141,247,246,1)]"
-                      />                    
-                      </td>
-                    <td className="transition-all duration-400 px-4 py-2  text-lg text-center">
+                        onChange={(e) => setManual((prev) => ({ ...prev, tehudat_zehut: e.target.value }))}
+                        className="transition-all duration-400 mt-2 mb-1 bg-white text-black text-center focus:outline-turquiseConvined  rounded-sm hover:shadow-[0_0_10px_rgba(141,247,246,1)]"
+                      />   
+                      <div className="h-3">
+                        {
+                          manual.mispar_ishi === "" && manual.tehudat_zehut === "" &&
+                          <small className={`block text-[10px] text-redConvinedStronger ${
+                            vibrate === true ? "animate-vibrate" : ""
+                          }`}>
+                            * ת.ז או מ.א חובה
+                          </small>
+                        }
+                      </div>   
+                    </td>
+                    <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
                       <input
                         type="text"
                         value={manual.full_name}
                         placeholder={placeholderMap[filter.field] || "משתתף חדש"}
-                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
-                        className="transition-all duration-400 bg-white roundee text-center focus:outline-greenConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,249,176,1)]"
+                        onChange={(e) => setManual((prev) => ({ ...prev, full_name: e.target.value }))}
+                        className="transition-all mt-2 mb-1 duration-400 bg-white roundee text-center focus:outline-greenConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,249,176,1)]"
                       />
+                      <div className="h-3">
+                        {
+                          manual.full_name === "" &&
+                          <small className={`block text-[10px] text-redConvinedStronger ${
+                            vibrate === true ? "animate-vibrate" : ""
+                          }`}>
+                            * ת.ז או מ.א חובה
+                          </small>                        
+                        }
+                      </div>
                     </td>
                     <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
                         <select
-                          onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
-                          className="duration-400 mx-2 text-center transition-all duration-400 bg-white focus:outline-lavanderConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,145,247,1)]"
+                          onChange={(e) =>
+                          setManual((prev) => ({
+                          ...prev,
+                          arrived: JSON.parse(e.target.value),
+                        }))
+}                          className="duration-400 mx-2 text-center transition-all duration-400 bg-white focus:outline-lavanderConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,145,247,1)]"
                         >   
                           <option value={false}>לא</option>
                           <option value={true}>כן</option>
                         </select>
                     </td>
-                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
-                      <input
-                        type="text"
-                        value={manual.date_arrived}
-                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
-                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
-                        className="transition-all duration-400 bg-white text-center focus:outline-pinkConvined rounded-sm hover:shadow-[0_0_10px_rgba(242,141,247,1)]"
-                      />                 
+                    <td className="transition-all w-min justify-center mx-auto duration-400 text-center">
+                      {
+                        manual.arrived === true &&
+                        <div>
+                          <input
+                            type="date"
+                            value={manual.date_arrived}
+                            onChange={(e) => setManual((prev) => ({ ...prev, date_arrived: e.target.value }))}
+                            placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                            className="transition-all mt-2 mb-1 duration-400 bg-white text-center focus:outline-pinkConvined rounded-sm hover:shadow-[0_0_10px_rgba(242,141,247,1)]"
+                            /> 
+                        <div className="h-3">
+                          {
+                            manual.date_arrived === "" &&
+                            <small className={`block text-[10px] text-redConvinedStronger ${
+                              vibrate === true ? "animate-vibrate" : ""
+                            }`}>
+                              * שדה זה חובה
+                            </small>                          
+                          }
+                        </div>                        
+                      </div>
+                
+                      }
                     </td>
                     <td className="transition-all duration-400 px-4 py-2 text-center">
-                      <button className="text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
+                      <button onClick={handleManualSubmit} className="text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
                     </td>
                   </tr>
               }

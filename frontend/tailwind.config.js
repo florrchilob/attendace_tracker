@@ -18,7 +18,9 @@ export default {
         redConvinedStronger: "#FF7373",
         yellowConvined: "#F7F78D"
       },
-    },
+      animation: {
+        vibrate: 'vibrate 0.3s ease-in-out',
+      },    },
   },
   plugins: [],
 };

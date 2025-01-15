@@ -6,8 +6,8 @@ import AddLogo from "../assets/Logos/AddLogo";
 import GarbageLogo from "../assets/Logos/GarbageLogo";
 import Swal from "sweetalert2";
 import '../App.css'
-import AddAttendeeManual from "../components/AddAttendeeManual";
-
+import EditLogo from "../assets/Logos/EditLogo";
+import DeleteUserLogo from "../assets/Logos/DeleteUserLogo";
 
 const AttendeesPage = () => {
   // const apiUrl = process.env.REACT_APP_API_URL + "/attendees";
@@ -18,6 +18,14 @@ const AttendeesPage = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [file, setFile] = useState(null);
   const [addingManual, setAddingManual] = useState(false);
+  const [manual, setManual] = useState({
+    mispar_ishi: "",
+    tehudat_zehut: "",
+    full_name: "",
+    arrived: false,
+    date_arrived: ""
+  })
+
   const placeholderMap = {
     mispar_ishi: "הקלד מספר אישי",
     tehudat_zehut: "הקלד תעודת זהות",
@@ -570,7 +578,10 @@ const filteredAttendees = attendees
       direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
-  
+
+  // const handleAddingManual = () => {
+  //   setAddingManual(true)
+  // }
   
   return (
     <div
@@ -748,12 +759,6 @@ const filteredAttendees = attendees
             </button>
           </div>
         </div>
-        {
-          addingManual &&
-          <div>
-            <AddAttendeeManual/>
-          </div>
-        }
         <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
           <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
             <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
@@ -762,10 +767,67 @@ const filteredAttendees = attendees
                 <th className="px-4 py-2 text-center">תעודת זהות</th>
                 <th className="px-4 py-2 text-center">שם</th>
                 <th className="px-4 py-2 text-center">נוכחות</th>
-                <th className="px-4 py-2 text-center">תאריך הגעה</th>
+                <th className="px-4 py-2 text-center">תאריך הגעה</th>                
+                <th className="py-2 text-center">פעולות עם <br/> המשתמש היחיד</th>
+
               </tr>
             </thead>
             <tbody>
+              {
+                addingManual &&
+                <tr
+                    className="transition-all duration-400 border-b  border-gray-600 hover:bg-gray-600"
+                  >
+                    <td className="transition-all duration-400 text-center ">
+                      <input
+                        type="num"
+                        value={manual.mispar_ishi}
+                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        className="transition-all duration-400 bg-white text-center text-black focus:outline-limeConvined rounded-sm hover:shadow-[0_0_10px_rgba(174,247,142,1)]"
+                      />
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
+                      <input
+                        type="text"
+                        value={manual.tehudat_zehut}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                        className="transition-all duration-400 bg-white text-center focus:outline-turquiseConvined  rounded-sm hover:shadow-[0_0_10px_rgba(141,247,246,1)]"
+                      />                    
+                      </td>
+                    <td className="transition-all duration-400 px-4 py-2  text-lg text-center">
+                      <input
+                        type="text"
+                        value={manual.full_name}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                        className="transition-all duration-400 bg-white roundee text-center focus:outline-greenConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,249,176,1)]"
+                      />
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
+                        <select
+                          onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                          className="duration-400 mx-2 text-center transition-all duration-400 bg-white focus:outline-lavanderConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,145,247,1)]"
+                        >   
+                          <option value={false}>לא</option>
+                          <option value={true}>כן</option>
+                        </select>
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-lg text-center">
+                      <input
+                        type="text"
+                        value={manual.date_arrived}
+                        onChange={(e) => setManual((prev) => ({ ...prev, arrived: e.target.value }))}
+                        placeholder={placeholderMap[filter.field] || "משתתף חדש"}
+                        className="transition-all duration-400 bg-white text-center focus:outline-pinkConvined rounded-sm hover:shadow-[0_0_10px_rgba(242,141,247,1)]"
+                      />                 
+                    </td>
+                    <td className="transition-all duration-400 px-4 py-2 text-center">
+                      <button className="text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
+                    </td>
+                  </tr>
+              }
               {filteredAttendees.map((attendee, index) => (
                 <tr
                   key={index}
@@ -785,6 +847,10 @@ const filteredAttendees = attendees
                   </td>
                   <td className="transition-all duration-400 px-4 py-2 text-pinkConvined text-lg text-center">
                     {attendee.date_arrived ? formatDate(attendee.date_arrived) : "—"}
+                  </td>
+                  <td className="flex transition-all duration-400 text-lg gap-10 justify-center">
+                    <button className="text-sm text-white rounded-md hover:border-redConvinedStronger p-1 my-1"><DeleteUserLogo/></button>
+                    <button className="text-sm text-white rounded-md hover:border-yellowConvined p-1 my-1"> <EditLogo/> </button>
                   </td>
                 </tr>
               ))}

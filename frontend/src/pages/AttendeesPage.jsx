@@ -807,8 +807,28 @@ const filteredAttendees = attendees
       return;
     }
   
-    console.log(editData)
-    // llamar api aca
+    const originalData = attendees.find(attendee => attendee.id === editingId);
+
+    if (!originalData) {
+      console.error("Original data not found");
+      return;
+    }
+
+    const changes = {};
+    Object.keys(editData).forEach(key => {
+      if (editData[key] !== originalData[key]) {
+        changes[key] = editData[key];
+      }
+    });
+
+    if (Object.keys(changes).length === 0) {
+      console.log("No changes were made.");
+    }
+    else
+    {
+      console.log(changes)
+    }
+
     setAttendees((prev) =>
       prev.map((attendee) =>
         attendee.id === editingId ? { ...attendee, ...editData } : attendee
@@ -818,10 +838,6 @@ const filteredAttendees = attendees
     setEditData({});
   };
   
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditData({});
-  };
 
   return (
     <div
@@ -1132,6 +1148,18 @@ const filteredAttendees = attendees
                     </td>
                     <td className="transition-all duration-400 px-4 py-2 text-center">
                       <button onClick={handleManualSubmit} className="focus:outline-greenConvined text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  להוסיף </button>         
+                      <button onClick={() => {
+                        setAddingManual(false)
+                        setManual({
+                          mispar_ishi: "",
+                          tehudat_zehut: "",
+                          full_name: "",
+                          arrived: false,
+                          date_arrived: "",
+                        });
+                      }}
+                        className="focus:outline-none underline text-redConvinedStronger text-sm font-serif border-none border-transparent  px-2 py-1 ms-3">  לבטל 
+                      </button>  
                     </td>
                   </tr>
               }
@@ -1226,6 +1254,18 @@ const filteredAttendees = attendees
                     </td>
                     <td className="transition-all duration-400 px-4 py-2 text-center">
                       <button onClick={handleEditSubmit} className="focus:outline-greenConvined text-green-900 font-bold rounded-2xl border-none border-transparent bg-greenConvined px-2 py-1 shadow-[0_0_20px_rgba(141,249,176,1)]">  לשלוח </button>         
+                      <button onClick={() => {
+                        setEditingId(null);
+                        setEditData({
+                          mispar_ishi: "",
+                          tehudat_zehut: "",
+                          full_name: "",
+                          arrived: false,
+                          date_arrived: "",
+                        });
+                      }}
+                        className="focus:outline-none underline text-redConvinedStronger text-sm font-serif border-none border-transparent  px-2 py-1 ms-3">  לבטל 
+                      </button>         
                     </td>
                   </tr>
                   )

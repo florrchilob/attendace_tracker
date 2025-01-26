@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import InputPage from './InputPage';
 import NamePage from './NamePage';
@@ -7,6 +7,7 @@ function HomePage() {
   const [currentCard, setCurrentCard] = useState("inputCard");
   const [selectedOption, setSelectedOption] = useState("misparIshi");
   const [inputID, setInputID] = useState("");
+
 
   const pageVariants = {
     initial: (direction) => ({

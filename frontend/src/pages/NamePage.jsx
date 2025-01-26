@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import {React, useState} from 'react'
 import TypingGif from '../assets/animations/Typing.gif'
 import Swal from "sweetalert2";
 import '../App.css'
@@ -7,8 +7,7 @@ import '../App.css'
 function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
     const [fullName, setFullName] = useState("")
 
-  // const apiUrl = process.env.REACT_APP_API_URL + "/attendees";
-  const apiUrl = "http://127.0.0.1:8000" + "/attendees";
+  const apiUrl = import.meta.env.VITE_BACKEND_URL + "/attendees";
 
     const handleSubmit = async() => {
         const now = new Date();
@@ -25,12 +24,11 @@ function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, set
         const toSend = {"attendees": [attendee]}
         let response = await fetch(`${apiUrl}/create`, {
             method:'POST',
-                    headers: {
-                        'Access-Control-Allow-Origin': 'http://localhost:5173',
-                        'Content-Type': 'application/json', 
-                    },
-                    body: JSON.stringify(toSend)
-
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json', 
+            },
+            body: JSON.stringify(toSend)
         })
         const data = await response.json()
         const statusCode = response.status

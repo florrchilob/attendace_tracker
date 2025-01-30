@@ -729,6 +729,10 @@ const AttendeesPage = () => {
       return;
     }
 
+    if (manual.mispar_ishi && manual.mispar_ishi.startsWith('0')) {
+      manual.mispar_ishi = manual.mispar_ishi.slice(1);
+    }
+
     const isDuplicate = attendees.some(
       (attendee) =>
         (manual.tehudat_zehut && attendee.tehudat_zehut === manual.tehudat_zehut) ||
@@ -791,6 +795,7 @@ const AttendeesPage = () => {
       });
       return;
     }
+
     if (!editData.tehudat_zehut && !editData.mispar_ishi) {
       Swal.fire({
         position: "center",
@@ -805,6 +810,7 @@ const AttendeesPage = () => {
       });
       return;
     }
+
     if (editData.tehudat_zehut && (!/^\d{9}$/.test(editData.tehudat_zehut))) {
       Swal.fire({
         position: "center",
@@ -819,6 +825,7 @@ const AttendeesPage = () => {
       });
       return;
     }
+
     if (editData.mispar_ishi && (!/^\d{6,}$/.test(editData.mispar_ishi))) {
       Swal.fire({
         position: "center",
@@ -833,6 +840,7 @@ const AttendeesPage = () => {
       });
       return;
     }
+
     if (editData.arrived === true && (!editData.date_arrived || editData.date_arrived.trim() === "")) {
       Swal.fire({
         position: "center",
@@ -853,6 +861,10 @@ const AttendeesPage = () => {
     if (!originalData) {
       console.error("Original data not found");
       return;
+    }
+
+    if (editData.mispar_ishi && editData.mispar_ishi.startsWith('0')) {
+      editData.mispar_ishi = editData.mispar_ishi.slice(1);
     }
 
     const isDuplicate = attendees.some(

@@ -1,13 +1,7 @@
 from config.db import Session
 from models.tables import attendees
 from sqlalchemy import or_, select, and_
-from schemas.attendee import Attendee
 from sqlalchemy import func
-import base64
-import sqlalchemy
-import datetime
-import json
-
 session = None
 
 def db_open_session():

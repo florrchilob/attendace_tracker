@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, MetaData
 from dotenv import find_dotenv, load_dotenv
-import os
 from sqlalchemy.orm import Session
 
 

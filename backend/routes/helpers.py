@@ -1,11 +1,6 @@
 #Imports
-from datetime import time, datetime
-from email.message import EmailMessage
+from datetime import datetime
 from fastapi.responses import JSONResponse
-from routes.db_helpers import db_validating
-import ssl 
-import smtplib
-import re
 
 #Returns the response in a valid way
 def to_return(status_code, error=0, data={}, testing= None):

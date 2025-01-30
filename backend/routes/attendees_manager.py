@@ -10,9 +10,7 @@ from routes.db_helpers import db_validating, db_saving, db_getting, db_updating,
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
 from datetime import datetime
-import pandas
 import json
-import jwt
 import os
 
 

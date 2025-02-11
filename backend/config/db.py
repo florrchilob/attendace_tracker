@@ -8,8 +8,9 @@ load_dotenv(dotenv_path)
 
 
 user = "root"
-password = "password"
+password = "Aa123456123456"
 # Aa123456123456
+# password
 host = "localhost"
 secret_key="AA123456123456"
 port = 3306

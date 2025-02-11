@@ -21,7 +21,7 @@ function App() {
         transition-all 
         duration-300 
         hover:shadow-lg 
-        hover:shadow-lavanderConvined"
+        hover:shadow-lavanderConvined opacity-80"
       >     
         <AkaIcon />
       </button>

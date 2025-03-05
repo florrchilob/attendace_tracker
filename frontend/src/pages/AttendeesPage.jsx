@@ -954,9 +954,9 @@ const AttendeesPage = () => {
   return (
     <div
       dir="rtl"
-      className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center"
+      className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center overflow-hidden"
     >
-      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10">
+      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10 h-screen mt-10">
         <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
           רשימת משתתפים
         </h1>
@@ -1058,7 +1058,7 @@ const AttendeesPage = () => {
             <select
               onChange={handleFilterFieldChange}
               value={filter.field}
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
             >
               <option value="">חפש לפי</option>
               <option value="mispar_ishi">מספר אישי</option>
@@ -1094,7 +1094,7 @@ const AttendeesPage = () => {
           <div className="flex items-center w-1/2 justify-end">
             <select
               onChange={(e) => handleSort(e.target.value)}
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-1/3 mx-2 text-center"
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2  mx-2 text-center"
             >
               <option value="">מיין לפי</option>
               <option value="mispar_ishi">מספר אישי</option>

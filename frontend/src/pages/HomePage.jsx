@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import InputPage from './InputPage';
 import NamePage from './NamePage';
 
-function HomePage() {
-  const [currentCard, setCurrentCard] = useState("inputCard");
+function HomePage({currentCard, setCurrentCard}) {
   const [selectedOption, setSelectedOption] = useState("misparIshi");
   const [inputID, setInputID] = useState("");
 
@@ -45,7 +44,7 @@ function HomePage() {
   };
 
   return (
-    <div dir="rtl" className="relative bg-bg-desktop bg-cover bg-center h-screen w-screen flex justify-center items-center overflow-hidden">
+    <div dir="rtl" className="relative bg-bg-desktop bg-cover bg-center w-screen flex justify-center items-center">
       <AnimatePresence custom={direction} mode="wait">
         {currentCard === "inputCard" ? (
           <motion.div

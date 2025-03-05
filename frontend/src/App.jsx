@@ -18,7 +18,7 @@ function App() {
   return (
     <>
       <button 
-        onClick={() => {handleNavigateHome; setCurrentCard("inputCard")}} 
+        onClick={() => {handleNavigateHome(); setCurrentCard("inputCard")}} 
         className="absolute top-8 left-8 border-none cursor-pointer z-50 focus:outline-none 
         rounded-full 
         transition-all 

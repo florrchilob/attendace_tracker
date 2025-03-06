@@ -122,12 +122,11 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
     current_time = datetime.now()
     for attendee in validAttendees:
         is_existing = False
-        
-        if attendee.mispar_ishi and attendee.mispar_ishi in mispar_validation["existing_values"]:
+        if attendee.mispar_ishi and str(attendee.mispar_ishi) in mispar_validation["existing_values"]:
             already_mispar_ishi.append(attendee.mispar_ishi)
             is_existing = True
         
-        if attendee.tehudat_zehut and attendee.tehudat_zehut in tehudat_validation["existing_values"]:
+        if attendee.tehudat_zehut and str(attendee.tehudat_zehut) in tehudat_validation["existing_values"]:
             already_tehudat_zehut.append(attendee.tehudat_zehut)
             is_existing = True
         
@@ -135,7 +134,6 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
             if attendee.arrived:
                 attendee.date_arrived = current_time
             new_attendees_to_save.append(attendee)
-
     if new_attendees_to_save and testing != "Ok" and testing != "zeros":
         result = db_bulk_saving(new_attendees_to_save, attendees, testing)
         if result == "error":

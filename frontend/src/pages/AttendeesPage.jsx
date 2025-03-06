@@ -465,43 +465,21 @@ const AttendeesPage = () => {
 
   const sendDataToAPI = async (data) => {
     try {
-      // let dataResponseTotal = { error_code: 101, missing_data: [] }
-      console.log("Sending")
+      console.log("started sending")
       const response = await fetch(`${apiUrl}/create`, {
-            method: "POST",
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ attendees: data }),
+        method: "POST",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ attendees: data }),
       });
-      const dataResponse = await response.json()
-      console.log(dataResponse.message)
-      console.log("done received")
-      // for (let i = 0; i < data.length - 1; i += 1000) {
-      //   const batch = data.slice(i, i + 1000);
-      //   const response = await fetch(`${apiUrl}/create`, {
-      //     method: "POST",
-      //     headers: {
-      //       "Access-Control-Allow-Origin": "*",
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({ attendees: batch }),
-      //   });
-      //   if (response.status == 500) {
-      //     throw new Error(`Server error: ${response.status}`);
-      //   }
-      //   let newResponse = await response.json()
-      //   if (dataResponseTotal.error_code == 101 && newResponse.status != 101) {
-      //     dataResponseTotal.status = newResponse.status
-      //   }
-      //   newResponse = newResponse.data
-      //   dataResponseTotal.missing_data = [
-      //     ...dataResponseTotal.missing_data,
-      //     ...newResponse.missing_data,
-      //   ]
-      // }
-      // handleAPIResponse(dataResponseTotal);
+      if (response.status == 500) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      console.log("end sending")
+      let dataResponse = await response.json()
+      handleAPIResponse(dataResponse);
     } catch (error) {
       console.error("Error in sendDataToAPI:", error);
       Swal.fire({
@@ -1081,16 +1059,16 @@ const AttendeesPage = () => {
             <select
               onChange={handleFilterFieldChange}
               value={filter.field}
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 w-1/3 text-white font-semibold rounded-full p-2 mx-2 text-center"
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
             >
               <option value="">חפש לפי</option>
-              <option value="mispar_ishi">מ.א.</option>
-              <option value="tehudat_zehut">ת.ז.</option>
+              <option value="mispar_ishi">מספר אישי</option>
+              <option value="tehudat_zehut">תעודת זהות</option>
               <option value="full_name">שם</option>
               <option value="arrived">נוכחות</option>
               <option value="date_arrived">תאריך הגעה</option>
             </select>
-            <div className="flex items-center transform-all duration-700 w-2/3">
+            <div className="flex items-center w-2/3 transform-all duration-700">
               {
                 filter.field != "" &&
                 <input
@@ -1098,7 +1076,7 @@ const AttendeesPage = () => {
                   value={filter.value}
                   onChange={handleFilterChange}
                   placeholder={placeholderMap[filter.field] || "הקלד ערך"}
-                  className="transition-all duration-400 bg-gray-700 w-min-[19px] bg-opacity-70 text-white font-semibold rounded-full p-2 w-full text-center"
+                  className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full text-center"
                 />
               }
               <div

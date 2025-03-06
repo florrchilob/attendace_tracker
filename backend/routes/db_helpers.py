@@ -225,7 +225,6 @@ def db_updating(to_update):
     return {"ok"}
 
 def db_bulk_saving(to_save_list, table, testing = None):
-
     global session
     if session is None:
         db_open_session()

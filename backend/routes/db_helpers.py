@@ -53,6 +53,26 @@ def db_validating(to_validate, testing = None):
             session.rollback()
             db_close_session()
             return "error"
+    # Type 4 = check if values exist in specified column
+    if type_function == 4:
+        try:
+            column_name = to_validate.get("column_name")
+            values_list = to_validate.get("values_list")
+            if not column_name or not values_list:
+                return "error"
+            column = getattr(attendees.c, column_name)
+            query = attendees.select().filter(column.in_(values_list))
+            existing_records = session.execute(query).fetchall()
+            existing_values = {getattr(record, column_name) for record in existing_records}
+            missing_values = set(values_list) - existing_values
+            return {
+                "existing_values": existing_values,
+                "missing_values": missing_values
+            }
+        except:
+            session.rollback()
+            db_close_session()
+            return "error"
 
 def db_deleting(to_delete):
     type_delete = to_delete.get("type")
@@ -203,4 +223,21 @@ def db_updating(to_update):
             session.rollback()
             return "error"
     return {"ok"}
+
+def db_bulk_saving(to_save_list, table, testing = None):
+
+    global session
+    if session is None:
+        db_open_session()
+    try:
+        values = [attendee.__dict__ for attendee in to_save_list]
+        result = session.execute(table.insert(), values)
+        session.commit()
+        return True
+    except Exception as e:
+        session.rollback()
+        print(f"Bulk save error: {str(e)}")
+        return "error"
+    finally:
+        db_close_session()
     

@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from typing import List
 from schemas.attendee import Attendee
 from routes.helpers import to_return, sends_validate
-from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting
+from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting, db_bulk_saving
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
 from datetime import datetime
@@ -99,41 +99,59 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
     added_mispar_ishi = []
     added_tehudat_zehut = []
     full_attendees_added = []
-    for this_attendee in validAttendees:
-        validation = db_validating({"type": 1, "mispar_ishi": this_attendee.mispar_ishi, "tehudat_zehut": this_attendee.tehudat_zehut})
-        if validation != True:
-            if this_attendee.mispar_ishi and not this_attendee.tehudat_zehut:
-                already_mispar_ishi.append(this_attendee.mispar_ishi)
-            elif not this_attendee.mispar_ishi and this_attendee.tehudat_zehut:
-                already_tehudat_zehut.append(this_attendee.tehudat_zehut)
+    new_attendees_to_save = []
+
+    mispar_ishi_list = [attendee.mispar_ishi for attendee in validAttendees if attendee.mispar_ishi is not None]
+    tehudat_zehut_list = [attendee.tehudat_zehut for attendee in validAttendees if attendee.tehudat_zehut is not None]
+
+    mispar_validation = db_validating({
+        "type": 4,
+        "column_name": "mispar_ishi",
+        "values_list": mispar_ishi_list
+    }) if mispar_ishi_list else {"existing_values": set(), "missing_values": set()}
+
+    tehudat_validation = db_validating({
+        "type": 4,
+        "column_name": "tehudat_zehut",
+        "values_list": tehudat_zehut_list
+    }) if tehudat_zehut_list else {"existing_values": set(), "missing_values": set()}
+
+    if mispar_validation == "error" or tehudat_validation == "error":
+        return (500, 99)
+
+    current_time = datetime.now()
+    for attendee in validAttendees:
+        is_existing = False
+        
+        if attendee.mispar_ishi and attendee.mispar_ishi in mispar_validation["existing_values"]:
+            already_mispar_ishi.append(attendee.mispar_ishi)
+            is_existing = True
+        
+        if attendee.tehudat_zehut and attendee.tehudat_zehut in tehudat_validation["existing_values"]:
+            already_tehudat_zehut.append(attendee.tehudat_zehut)
+            is_existing = True
+        
+        if not is_existing:
+            if attendee.arrived:
+                attendee.date_arrived = current_time
+            new_attendees_to_save.append(attendee)
+
+    if new_attendees_to_save and testing != "Ok" and testing != "zeros":
+        result = db_bulk_saving(new_attendees_to_save, attendees, testing)
+        if result == "error":
+            return (500, 99)
+        
+        for attendee in new_attendees_to_save:
+            full_attendees_added.append(attendee.return_dict())
+            
+            if attendee.mispar_ishi:
+                added_mispar_ishi.append(attendee.mispar_ishi)
             else:
-                if validation.mispar_ishi == this_attendee.mispar_ishi:
-                    already_mispar_ishi.append(this_attendee.mispar_ishi)
-                else:
-                    already_tehudat_zehut.append(this_attendee.tehudat_zehut)
-        else:
-            db_open_session()
-            if testing != "Ok" and testing != "zeros":
-                if this_attendee.arrived:
-                    this_attendee.date_arrived = datetime.now()
-                response_db = db_saving(this_attendee, attendees, testing)
-                if response_db == "error":
-                    return (500, 99)
-                this_attendee.id = response_db
-                full_attendees_added.append(this_attendee.return_dict())
-            else:
-                response_db = True
-            db_close_session() 
-            date_arrived_json = None
-            if this_attendee.date_arrived:
-                date_arrived_json = (this_attendee.date_arrived).strftime("%H:%M")
-            if this_attendee.mispar_ishi:
-                added_mispar_ishi.append({"id":this_attendee.mispar_ishi, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
-            else:
-                added_tehudat_zehut.append({"id":this_attendee.tehudat_zehut, "full_name": this_attendee.full_name, "date_arrived": date_arrived_json})
+                added_tehudat_zehut.append(attendee.tehudat_zehut)
+
     returning = {
         "missing_data": invalid,
-        "already_database":{
+        "already_database": {
             "mispar_ishi": already_mispar_ishi,
             "tehudat_zehut": already_tehudat_zehut
         },
@@ -142,6 +160,7 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
             "tehudat_zehut": added_tehudat_zehut
         }
     }
+
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:      
         message = {
             "action": "create",

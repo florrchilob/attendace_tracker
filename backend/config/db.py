@@ -8,7 +8,7 @@ load_dotenv(dotenv_path)
 
 
 user = "root"
-password = "password"
+password = "Aa123456123456"
 # Aa123456123456
 # password
 host = "localhost"

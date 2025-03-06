@@ -67,6 +67,7 @@ const AttendeesPage = () => {
     let eventSource = new EventSource(apiUrl + "/clients");
 
     eventSource.onmessage = (event) => {
+      console.log("received the data in the front")
       console.log("Message received: ", event.data);
     };
 
@@ -406,6 +407,7 @@ const AttendeesPage = () => {
 
       return newRow;
     })
+
     return jsonData
   }
 
@@ -428,7 +430,6 @@ const AttendeesPage = () => {
         setFile(true);
         const file = e.target.files[0];
         const reader = new FileReader();
-
         jsonData = await new Promise((resolve, reject) => {
           reader.onload = (event) => resolve(excelToJSON(event));
           reader.onerror = (error) => reject(error);
@@ -463,22 +464,44 @@ const AttendeesPage = () => {
   };
 
   const sendDataToAPI = async (data) => {
-    const toSend = { attendees: data };
     try {
+      // let dataResponseTotal = { error_code: 101, missing_data: [] }
+      console.log("Sending")
       const response = await fetch(`${apiUrl}/create`, {
-        method: "POST",
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(toSend),
+            method: "POST",
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ attendees: data }),
       });
-
-      if (response.status == 500) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-      const dataResponse = await response.json();
-      handleAPIResponse(dataResponse);
+      const dataResponse = await response.json()
+      console.log(dataResponse.message)
+      console.log("done received")
+      // for (let i = 0; i < data.length - 1; i += 1000) {
+      //   const batch = data.slice(i, i + 1000);
+      //   const response = await fetch(`${apiUrl}/create`, {
+      //     method: "POST",
+      //     headers: {
+      //       "Access-Control-Allow-Origin": "*",
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({ attendees: batch }),
+      //   });
+      //   if (response.status == 500) {
+      //     throw new Error(`Server error: ${response.status}`);
+      //   }
+      //   let newResponse = await response.json()
+      //   if (dataResponseTotal.error_code == 101 && newResponse.status != 101) {
+      //     dataResponseTotal.status = newResponse.status
+      //   }
+      //   newResponse = newResponse.data
+      //   dataResponseTotal.missing_data = [
+      //     ...dataResponseTotal.missing_data,
+      //     ...newResponse.missing_data,
+      //   ]
+      // }
+      // handleAPIResponse(dataResponseTotal);
     } catch (error) {
       console.error("Error in sendDataToAPI:", error);
       Swal.fire({
@@ -896,7 +919,7 @@ const AttendeesPage = () => {
       }
     });
 
-    if (Object.keys(changes).length === 1) { 
+    if (Object.keys(changes).length === 1) {
       console.log("No changes were made.");
       return;
     }
@@ -954,9 +977,9 @@ const AttendeesPage = () => {
   return (
     <div
       dir="rtl"
-      className="transition-all duration-700 bg-bg-desktop bg-cover bg-center h-screen w-screen p-16 flex justify-center items-center overflow-hidden"
+      className="transition-all duration-700 bg-bg-desktop bg-cover bg-center w-screen px-16 flex justify-center items-center overflow-hidden"
     >
-      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen py-10 h-screen mt-10">
+      <div className="bg-gray-800 bg-opacity-90 rounded-3xl shadow-lg p-6 w-screen h-screen py-10 mt-36">
         <h1 className="text-4xl font-bold text-center mb-6 text-white justify-center flex flex-col">
           רשימת משתתפים
         </h1>
@@ -1126,7 +1149,7 @@ const AttendeesPage = () => {
             </button>
           </div>
         </div>
-        <div className="transition-all duration-400 overflow-y-auto max-h-[500px] rounded-lg">
+        <div className="transition-all duration-400 overflow-y-auto max-h-screen rounded-lg">
           <table className="w-full text-right bg-gray-700 bg-opacity-70 rounded-lg overflow-hidden">
             <thead className="bg-gray-600 text-gray-300 sticky top-0 z-10">
               <tr>
@@ -1149,7 +1172,7 @@ const AttendeesPage = () => {
                       type="number"
                       value={manual.mispar_ishi}
                       onChange={(e) => setManual((prev) => ({ ...prev, mispar_ishi: e.target.value }))}
-                      placeholder={"משתתף חדש"} 
+                      placeholder={"משתתף חדש"}
                       className="transition-all text-gray-800 duration-400 mt-2 mb-1 bg-white text-center  focus:outline-limeConvined rounded-sm hover:shadow-[0_0_10px_rgba(174,247,142,1)]"
                     />
                     <div className="h-3">
@@ -1173,7 +1196,7 @@ const AttendeesPage = () => {
                     <input
                       type="text"
                       value={manual.tehudat_zehut}
-                      placeholder={"משתתף חדש"} 
+                      placeholder={"משתתף חדש"}
                       onChange={(e) => setManual((prev) => ({ ...prev, tehudat_zehut: e.target.value }))}
                       className="transition-all text-gray-800 duration-400 mt-2 mb-1 bg-white  text-center focus:outline-turquiseConvined  rounded-sm hover:shadow-[0_0_10px_rgba(141,247,246,1)]"
                     />
@@ -1198,7 +1221,7 @@ const AttendeesPage = () => {
                     <input
                       type="text"
                       value={manual.full_name}
-                      placeholder={"משתתף חדש"} 
+                      placeholder={"משתתף חדש"}
                       onChange={(e) => setManual((prev) => ({ ...prev, full_name: e.target.value }))}
                       className="transition-all text-gray-800 mt-2 mb-1 duration-400 bg-white roundee text-center focus:outline-greenConvined rounded-sm hover:shadow-[0_0_10px_rgba(141,249,176,1)]"
                     />

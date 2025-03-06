@@ -31,6 +31,8 @@ def to_return(status_code, error=0, data={}, testing= None):
             message = "ID not valid"
         case 104:
             message = "No matches to your search"
+        case 8000: 
+            message ="Test"
         case _:
             message = "Page not exists"
 

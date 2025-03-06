@@ -44,7 +44,7 @@ function HomePage({currentCard, setCurrentCard}) {
   };
 
   return (
-    <div dir="rtl" className="relative bg-bg-desktop bg-cover bg-center w-screen flex justify-center items-center">
+    <div dir="rtl" className="relative bg-bg-desktop bg-cover bg-center w-screen h-screen flex justify-center items-center">
       <AnimatePresence custom={direction} mode="wait">
         {currentCard === "inputCard" ? (
           <motion.div

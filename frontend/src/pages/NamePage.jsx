@@ -7,7 +7,7 @@ import '../App.css'
 function NamePage ({ inputID, setInputID, selectedOption, setSelectedOption, setCurrentCard}) {
     const [fullName, setFullName] = useState("")
 
-  const apiUrl = import.meta.env.VITE_BACKEND_URL + "/attendees";
+    const apiUrl = import.meta.env.VITE_BACKEND_URL + "/attendees";
 
     const handleSubmit = async() => {
         const now = new Date();

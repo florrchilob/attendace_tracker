@@ -85,7 +85,7 @@ async def createattendees(sent: dict):
                     attendee["date_arrived"] = datetime.strptime(attendee["date_arrived"], "%Y-%m-%d %H:%M:%S")
                 validAttende.create_straight(attendee)
                 valid.append(validAttende)
-    response = await logic_create_attendee(valid, invalid, testing)
+    response = await logic_create_attendees(valid, invalid, testing)
     if len(response) < 3:
         return to_return(response[0], response[1]) 
     else:
@@ -93,7 +93,7 @@ async def createattendees(sent: dict):
     
 
 #Logic behind the create function
-async def logic_create_attendee(validAttendees: list, invalid: List, testing):
+async def logic_create_attendees(validAttendees: list, invalid: List, testing):
     already_mispar_ishi = []
     already_tehudat_zehut = []
     added_mispar_ishi = []
@@ -141,11 +141,20 @@ async def logic_create_attendee(validAttendees: list, invalid: List, testing):
         
         for attendee in new_attendees_to_save:
             full_attendees_added.append(attendee.return_dict())
+            date_arrived_json = attendee.date_arrived.strftime("%H:%M") if attendee.date_arrived else None
             
             if attendee.mispar_ishi:
-                added_mispar_ishi.append(attendee.mispar_ishi)
+                added_mispar_ishi.append({
+                    "id": attendee.mispar_ishi,
+                    "full_name": attendee.full_name,
+                    "date_arrived": date_arrived_json
+                })
             else:
-                added_tehudat_zehut.append(attendee.tehudat_zehut)
+                added_tehudat_zehut.append({
+                    "id": attendee.tehudat_zehut,
+                    "full_name": attendee.full_name,
+                    "date_arrived": date_arrived_json
+                })
 
     returning = {
         "missing_data": invalid,

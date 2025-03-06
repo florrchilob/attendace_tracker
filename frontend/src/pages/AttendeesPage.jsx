@@ -1081,16 +1081,16 @@ const AttendeesPage = () => {
             <select
               onChange={handleFilterFieldChange}
               value={filter.field}
-              className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
+              className="transition-all duration-400 bg-gray-700 bg-opacity-70 w-1/3 text-white font-semibold rounded-full p-2 mx-2 text-center"
             >
               <option value="">חפש לפי</option>
-              <option value="mispar_ishi">מספר אישי</option>
-              <option value="tehudat_zehut">תעודת זהות</option>
+              <option value="mispar_ishi">מ.א.</option>
+              <option value="tehudat_zehut">ת.ז.</option>
               <option value="full_name">שם</option>
               <option value="arrived">נוכחות</option>
               <option value="date_arrived">תאריך הגעה</option>
             </select>
-            <div className="flex items-center w-2/3 transform-all duration-700">
+            <div className="flex items-center transform-all duration-700 w-2/3">
               {
                 filter.field != "" &&
                 <input
@@ -1098,7 +1098,7 @@ const AttendeesPage = () => {
                   value={filter.value}
                   onChange={handleFilterChange}
                   placeholder={placeholderMap[filter.field] || "הקלד ערך"}
-                  className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 w-full text-center"
+                  className="transition-all duration-400 bg-gray-700 w-min-[19px] bg-opacity-70 text-white font-semibold rounded-full p-2 w-full text-center"
                 />
               }
               <div

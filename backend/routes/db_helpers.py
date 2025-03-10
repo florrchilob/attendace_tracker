@@ -170,7 +170,7 @@ def db_getting(to_get):
         
     # Type 3 = get values from table where includes value
     if type == 3:
-        table = to_get.get("table")
+        table = attendees
         values_list = to_get.get("values")
         values = [getattr(table.c, key) for key in values_list]
         conditionals = to_get.get("conditionals")
@@ -180,9 +180,13 @@ def db_getting(to_get):
             query = select(*values).where(and_(*conditions))
             response = session.execute(query)
             data = response.fetchall()
+            data_array = [
+                        dict(zip(values_list, row))  
+                        for row in data
+                    ]
             if data == []:
                 return False
-            return data
+            return data_array
         except:
             return "error"
 

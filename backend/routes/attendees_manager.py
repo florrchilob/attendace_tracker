@@ -181,12 +181,30 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
         return (201, 0, returning)
     return (400, 101, returning)
 
-@attendees_route.get("/get")
-async def get_attendees():
-    response = db_getting({"type": 1, "table": attendees})
-    if response == "error":
-        return to_return(500, 99)
-    return to_return(200, 0, response)
+@attendees_route.get("/getby/{filter}/{value}")
+async def get_attendees(filter: str, value: str):
+    validation = sends_validate({"filter": filter, "value": value}, ["filter", "value"])
+    if validation == True:
+        response = await logic_get_attendees(filter, value)
+        if len(response) == 3:
+            return to_return(response[0], response[1], response[2])
+        return to_return(response[0], response[1])
+    return to_return(validation[0], validation[1])
+
+
+async def logic_get_attendees(filter: str, value: str):
+    if filter == "name":
+        filter = "full_name"
+    attendees = db_getting(
+        {
+            "type": 3, 
+            "values": ["id", "mispar_ishi", "tehudat_zehut", "full_name", "arrived", "date_arrived"], 
+            "conditionals": [{filter: value}]
+        }
+    )
+    if attendees == False:
+        return (400, 104)
+    return (200, 0, attendees)
 
 @attendees_route.put ("/edit")
 async def edit_attendees(sent: dict):

@@ -15,6 +15,8 @@ def to_return(status_code, error=0, data={}, testing= None):
             message = "Tehudat Zehut not valid"
         case 5:
             message = "Date not valid"
+        case 6:
+            message = "Filter not valid"
         case 9:
             message = "No connection to database" 
         case 10:
@@ -73,9 +75,6 @@ def sends_validate(to_validate, values):
             validation = True
             validation = validating(key, value, type(value))
             if validation != True:
-                token = any(k == "token" for k, v in to_validate)
-                if key == "account_id" and token == True:
-                    return (400, 16)
                 if type(validation) == tuple:
                     return (validation[0], validation[1])
                 return validation
@@ -115,18 +114,6 @@ def validating(key, value, type_variable):
             else:
                 if len(str(value)) != 9:
                     return (400, 4)
-        case "variable":
-            if value == None: 
-                return (400, 103)  
-            if value not in ["name", "mail", "mispar_ishi", "telephone"]:
-                return (400, 103) 
-        case "value": 
-            if value == None:
-                return (400, 103) 
-            if type_variable == int and value < 100:
-                return (400, 103)
-            if type_variable == str and len(value) < 3:
-                return (400, 103)
         case "arrived":
             if type_variable != bool:
                 return (400, 101)
@@ -148,4 +135,16 @@ def validating(key, value, type_variable):
                 datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
             except:    
                 return (400, 5)
+        case "filter":
+            if value == None:
+                return (400, 6)
+            if type_variable != str:
+                return (400, 6)
+            if value not in ["name", "full_name", "mispar_ishi", "tehudat_zehut", "arrived", "date_arrived"]:
+                return (400, 6)
+        case "value":
+            if value == None:
+                return (400, 6)
+            if len(value) < 3:
+                return (400, 6)
     return True

@@ -202,6 +202,8 @@ async def logic_get_attendees(filter: str, value: str):
             "conditionals": [{filter: value}]
         }
     )
+    if attendees == "error":
+        return (500, 99)
     if attendees == False:
         return (400, 104)
     return (200, 0, attendees)
@@ -234,9 +236,10 @@ async def logic_edit_attendee(attendee_to_edit, testing):
         return (400, 101)
 
     changes = {"id": attendee_to_edit.id}
+    attende_dict = attendee_to_edit.dict()
 
     if type(db_validation) != bool:
-        for key, value in attendee_to_edit.dict(exclude_none=True).items():
+        for key, value in attende_dict.items():
             if key != "id" and getattr(db_validation, key, None) != value:
                 changes[key] = value
 
@@ -320,6 +323,7 @@ async def attendee_arrived(sent: dict, testing: str = None):
 
 async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
     db_validation =  db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
+    print(db_validation)
     if db_validation == "error":
         return (500, 99)
     if db_validation == True:

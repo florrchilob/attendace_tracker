@@ -2,6 +2,7 @@ from config.db import Session
 from models.tables import attendees
 from sqlalchemy import or_, select, and_
 from sqlalchemy import func
+from datetime import datetime
 session = None
 
 def db_open_session():
@@ -128,8 +129,6 @@ def db_getting(to_get):
     if session is None:
         db_open_session()
     if type == 1:
-        from datetime import datetime
-
         try:
             table = to_get.get("table")
             query = table.select()
@@ -176,14 +175,21 @@ def db_getting(to_get):
         conditionals = to_get.get("conditionals")
         conditions = [func.lower(getattr(table.c, key)).like(func.lower(f"%{value}%")) 
                       for cond in conditionals for key, value in cond.items()]        
+        query = select(*values).where(and_(*conditions))
+        response = session.execute(query)
+        data = response.fetchall()
+        data_array = []
+        for row in data:
+                if hasattr(row, "_asdict"):
+                    row_dict = row._asdict() 
+                else:
+                    column_names = row.keys()
+                    row_dict = {column: getattr(row, column) for column in column_names}
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime): 
+                        row_dict[key] = value.isoformat()
+                data_array.append(row_dict)
         try:
-            query = select(*values).where(and_(*conditions))
-            response = session.execute(query)
-            data = response.fetchall()
-            data_array = [
-                        dict(zip(values_list, row))  
-                        for row in data
-                    ]
             if data == []:
                 return False
             return data_array

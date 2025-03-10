@@ -235,14 +235,20 @@ async def logic_edit_attendee(attendee_to_edit, testing):
     if db_validation == False:
         return (400, 101)
 
+    # me quedo por aca chequear de a uno tehudat zehut y mispar hishi y devolver el q no esta y ya esta
+    db_validation_unique = db_validating({"type": 1, "mispar_ishi": attendee_to_edit.mispar_ishi, "tehudat_zehut": attendee_to_edit.tehudat_zehut})
+    if db_validation_unique != True:
+        if attendee_to_edit.mispar_ishi == db_validation_unique.mispar_ishi:
+            return (400, 3)
+        else:
+            return (400, 4)
     changes = {"id": attendee_to_edit.id}
     attende_dict = attendee_to_edit.dict()
 
     if type(db_validation) != bool:
         for key, value in attende_dict.items():
-            if key != "id" and getattr(db_validation, key, None) != value:
+            if key != "id" and getattr(db_validation, key, None) != value and value != None:
                 changes[key] = value
-
     if "date_arrived" in changes:
         changes["date_arrived"] = datetime.strftime(changes["date_arrived"], "%Y-%m-%d %H:%M:%S")
         changes["arrived"] = True
@@ -252,7 +258,6 @@ async def logic_edit_attendee(attendee_to_edit, testing):
 
     response = db_updating({
         "type": 1,
-        "table": attendees,
         "conditionals": {"id": attendee_to_edit.id},
         "values": changes
     })
@@ -323,7 +328,6 @@ async def attendee_arrived(sent: dict, testing: str = None):
 
 async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
     db_validation =  db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
-    print(db_validation)
     if db_validation == "error":
         return (500, 99)
     if db_validation == True:

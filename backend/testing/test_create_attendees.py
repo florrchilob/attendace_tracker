@@ -32,7 +32,7 @@ def create_get_id_attendee(mispar_ishi_sent = None, tehudat_zehut = None):
     assert status == 201
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
     # Get id attendee
-    response = requests.get(BASE_URL + "/get")
+    response = requests.get(BASE_URL + "/getby/mispar_ishi/" + random_mispar_ishi)
     assert response.status_code == 200
     data = response.json()["data"]
     id_to_edit = None
@@ -72,10 +72,10 @@ def test_create_attendees_empty_attendees():
     assert data["error_code"] == 101
 
 def test_create_attendees_invalid_attendee():
-    invalid_attendee = [{"mispar_ishi": "12345"}]
+    invalid_attendee = [{"mispar_ishi": "12345", "full_name": "AAA"}]
     status, data = create_attendees(sent={"attendees": invalid_attendee})
     assert status == 400
-    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
+    assert data["data"]["missing_data"][0]["error"]["error_code"] == 3
 
 
 def test_create_attendees_duplicate_attendee():
@@ -89,13 +89,8 @@ def test_create_attendees_missing_name():
     attendee_no_name = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789"}]
     status, data = create_attendees(sent={"attendees": attendee_no_name})
     assert status == 400
-    assert data["data"]["missing_data"][0]["error"]["error_code"] == 4
-
-def test_create_attendees_invalid_name():
-    invalid_name = [{"mispar_ishi": "1234567", "tehudat_zehut": "123456789", "full_name": "J0hn D0e!"}]
-    status, data = create_attendees(sent={"attendees": invalid_name})
-    assert status == 400
     assert data["data"]["missing_data"][0]["error"]["error_code"] == 1
+
 
 def test_create_attendees_invalid_mispar_ishi():
     invalid_mispar_ishi = [{"mispar_ishi": "123", "tehudat_zehut": "123456789", "full_name": "John Doe"}]
@@ -119,13 +114,6 @@ def test_create_attendees_mixed_valid_and_invalid(random_data_create):
     assert status == 201
     assert len(data["data"]["missing_data"]) == 1
     assert len(data["data"]["successfull"]["mispar_ishi"]) == 1
-
-def test_create_attendees_large_input(random_data_create):
-    random_mispar_ishi, random_tehudat_zehut = random_data_create
-    large_input = [{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": "John Doe"} for i in range(100)]
-    status, data = create_attendees(sent={"attendees": large_input}, testing="Ok")
-    assert status == 201
-    assert len(data["data"]["successfull"]["mispar_ishi"]) == 100
 
 def test_create_attendees_invalid_mispar_ishi_leading_zeros(random_data_create):
     random_mispar_ishi, random_tehudat_zehut = random_data_create

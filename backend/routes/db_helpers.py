@@ -111,9 +111,9 @@ def db_saving(to_save, table, testing = None):
     global session
     if session is None:
         db_open_session()
-    query = table.insert().values(**to_save.__dict__)
-    response = session.execute(query)
     try:
+        query = table.insert().values(**to_save.__dict__)
+        response = session.execute(query)
         if response.rowcount >= 1:
             session.commit()
             return response.lastrowid
@@ -174,22 +174,22 @@ def db_getting(to_get):
         values = [getattr(table.c, key) for key in values_list]
         conditionals = to_get.get("conditionals")
         conditions = [func.lower(getattr(table.c, key)).like(func.lower(f"%{value}%")) 
-                      for cond in conditionals for key, value in cond.items()]        
-        query = select(*values).where(and_(*conditions))
-        response = session.execute(query)
-        data = response.fetchall()
-        data_array = []
-        for row in data:
-                if hasattr(row, "_asdict"):
-                    row_dict = row._asdict() 
-                else:
-                    column_names = row.keys()
-                    row_dict = {column: getattr(row, column) for column in column_names}
-                for key, value in row_dict.items():
-                    if isinstance(value, datetime): 
-                        row_dict[key] = value.isoformat()
-                data_array.append(row_dict)
+                      for cond in conditionals for key, value in cond.items()]   
         try:
+            query = select(*values).where(and_(*conditions))
+            response = session.execute(query)
+            data = response.fetchall()
+            data_array = []
+            for row in data:
+                    if hasattr(row, "_asdict"):
+                        row_dict = row._asdict() 
+                    else:
+                        column_names = row.keys()
+                        row_dict = {column: getattr(row, column) for column in column_names}
+                    for key, value in row_dict.items():
+                        if isinstance(value, datetime): 
+                            row_dict[key] = value.isoformat()
+                    data_array.append(row_dict)
             if data == []:
                 return False
             return data_array
@@ -202,7 +202,7 @@ def db_updating(to_update):
     if session is None:
         db_open_session()
     if to_update.get("type") == 1:
-        table = to_update.get("table")
+        table = attendees
         conditionals = to_update.get("conditionals")
         conditions = []
         for key, value in conditionals.items():
@@ -212,10 +212,9 @@ def db_updating(to_update):
                 else:
                     conditions.append(column == value)
         values = to_update.get("values")
-        query = table.update().where(and_(*conditions)).values(**values)
-
-        response = session.execute(query)
         try:
+            query = table.update().where(and_(*conditions)).values(**values)
+            response = session.execute(query)
             if response.rowcount >= 1:
                 session.commit()
                 return True
@@ -225,8 +224,8 @@ def db_updating(to_update):
             return "error"
     # Type 2 = restart attendace all attendees
     if to_update.get("type") == 2:
-        query = attendees.update().values(arrived = False, date_arrived = None)
         try:
+            query = attendees.update().values(arrived = False, date_arrived = None)
             response = session.execute(query)
             return True
         except:

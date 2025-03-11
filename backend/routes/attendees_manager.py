@@ -56,7 +56,7 @@ def home():
     return to_return(200)
 
 @attendees_route.get("/get/amountarrived")
-async def get_amount_arrived():
+def get_amount_arrived():
     response = db_getting({"type": 4})
     if response == "error":
         return to_return(500, 99)
@@ -175,10 +175,14 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
         }
     }
 
+    response = get_amount_arrived()
+    print(response.json())
+    if response == "error":
+        return (500, 99)
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:      
         message = {
             "action": "create",
-            "data": {"attendees": full_attendees_added}
+            "data": response
         }
         for queue in active_connections:
             try:

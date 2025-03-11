@@ -55,6 +55,13 @@ async def get_clients():
 def home():
     return to_return(200)
 
+@attendees_route.get("/get/amountarrived")
+async def get_amount_arrived():
+    response = db_getting({"type": 4})
+    if response == "error":
+        return to_return(500, 99)
+    return to_return(200, 0, {"total_amount": response.total_amount, "not_arrived": response.not_arrived})
+
 #Route called to sign up a new account to the system
 @attendees_route.post("/create")
 async def createattendees(sent: dict):

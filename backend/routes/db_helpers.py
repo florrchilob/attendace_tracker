@@ -1,6 +1,6 @@
 from config.db import Session
 from models.tables import attendees
-from sqlalchemy import or_, select, and_
+from sqlalchemy import or_, select, and_, case, cast, Integer
 from sqlalchemy import func
 from datetime import datetime
 session = None
@@ -193,6 +193,18 @@ def db_getting(to_get):
             if data == []:
                 return False
             return data_array
+        except:
+            return "error"
+    if type == 4:
+        table = attendees
+        query = select(
+            func.count(table.c.id).label("total_amount"),  
+            cast(func.sum(case((table.c.arrived == True, 0), else_=1)), Integer).label("not_arrived")
+        )
+        response = session.execute(query)
+        data = response.fetchone()
+        try:
+            return data
         except:
             return "error"
 

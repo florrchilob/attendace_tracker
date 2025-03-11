@@ -140,7 +140,7 @@ def validating(key, value, type_variable):
                 return (400, 6)
             if type_variable != str:
                 return (400, 6)
-            if value not in ["name", "full_name", "mispar_ishi", "tehudat_zehut"]:
+            if value not in ["id", "name", "full_name", "mispar_ishi", "tehudat_zehut"]:
                 return (400, 6)
         case "value":
             if value == None:

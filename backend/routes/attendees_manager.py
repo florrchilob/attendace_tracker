@@ -189,7 +189,7 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
     return (400, 101, returning)
 
 @attendees_route.get("/getby/{filter}/{value}")
-async def get_attendees(filter: str, value: str):
+async def get_attendees(filter: str, value):
     validation = sends_validate({"filter": filter, "value": value}, ["filter", "value"])
     if validation == True:
         response = await logic_get_attendees(filter, value)
@@ -242,12 +242,11 @@ async def logic_edit_attendee(attendee_to_edit, testing):
     if db_validation == False:
         return (400, 101)
 
-    # me quedo por aca chequear de a uno tehudat zehut y mispar hishi y devolver el q no esta y ya esta
     db_validation_unique = db_validating({"type": 1, "mispar_ishi": attendee_to_edit.mispar_ishi, "tehudat_zehut": attendee_to_edit.tehudat_zehut})
     if db_validation_unique != True:
-        if attendee_to_edit.mispar_ishi == db_validation_unique.mispar_ishi:
+        if attendee_to_edit.mispar_ishi == db_validation_unique.mispar_ishi and attendee_to_edit.mispar_ishi != None:
             return (400, 3)
-        else:
+        elif attendee_to_edit.tehudat_zehut == db_validation_unique.tehudat_zehut and attendee_to_edit.tehudat_zehut != None:
             return (400, 4)
     changes = {"id": attendee_to_edit.id}
     attende_dict = attendee_to_edit.dict()
@@ -261,7 +260,7 @@ async def logic_edit_attendee(attendee_to_edit, testing):
         changes["arrived"] = True
 
     if len(changes) == 1:
-        return (400, 102)
+        return (200, 0)
 
     response = db_updating({
         "type": 1,

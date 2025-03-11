@@ -68,6 +68,8 @@ def to_return(status_code, error=0, data={}, testing= None):
 
 #Sends every value to validate
 def sends_validate(to_validate, values):
+    if "filter" in to_validate:
+        filter = to_validate["filter"]
     if type(to_validate) == dict:
         to_validate = to_validate.items()
     for key, value in to_validate:
@@ -78,10 +80,16 @@ def sends_validate(to_validate, values):
                 if type(validation) == tuple:
                     return (validation[0], validation[1])
                 return validation
+            if key == "value":
+                validation = validating(filter, value, type(value), testing = "short")
+                if validation != True:
+                    if type(validation) == tuple:
+                        return (validation[0], validation[1])
+                    return validation
     return True
 
 #Validates all the necessary values
-def validating(key, value, type_variable):
+def validating(key, value, type_variable, testing = None):
     match key:
         case "full_name":
             if value == None:
@@ -96,12 +104,12 @@ def validating(key, value, type_variable):
             if type_variable == str:
                 if not value.isdigit():
                     return (400, 3)
-                if len(value) < 6:
+                if len(value) < 6 and testing != "short":
                     return(400, 3)
                 if value[0] == "0":
                     return(400, 3)
             else:
-                if len(str(value)) < 6:
+                if len(str(value)) < 6 and testing != "short":
                     return (400, 3)
         case "tehudat_zehut":
             if value == None:
@@ -109,17 +117,19 @@ def validating(key, value, type_variable):
             if type_variable == str:
                 if not value.isdigit():
                     return (400, 4)
-                if len(value) != 9:
+                if len(value) != 9 and testing != "short":
                     return(400, 4)
             else:
-                if len(str(value)) != 9:
+                if len(str(value)) != 9 and testing != "short":
                     return (400, 4)
         case "arrived":
             if type_variable != bool:
                 return (400, 101)
         case "id":
             if type_variable != int:
-                return (400, 102)
+                if not value.isdigit():
+                    return (400, 102)
+                value = int(value)
             if value < 0:
                 return (400, 102)
         case "date_arrived":
@@ -145,6 +155,6 @@ def validating(key, value, type_variable):
         case "value":
             if value == None:
                 return (400, 6)
-            if len(value) < 3:
+            if len(value) < 4:
                 return (400, 6)
     return True

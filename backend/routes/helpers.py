@@ -117,10 +117,10 @@ def validating(key, value, type_variable, testing = None):
             if type_variable == str:
                 if not value.isdigit():
                     return (400, 4)
-                if len(value) != 9 and testing != "short":
+                if len(value) != 9 and testing != "short" or len(value) > 9:
                     return(400, 4)
             else:
-                if len(str(value)) != 9 and testing != "short":
+                if len(str(value)) != 9 and testing != "short" or len(str(value)) > 9:
                     return (400, 4)
         case "arrived":
             if type_variable != bool:

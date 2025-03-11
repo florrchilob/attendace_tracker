@@ -10,7 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/attendees"
 
 # Add mock for testing database error
 @pytest.mark.asyncio
-async def create_get_id_attendee(mispar_ishi_sent = None, tehudat_zehut = None):
+async def create_get_id_attendee(mispar_ishi_sent = None, tehudat_zehut = None, full_name_sent = None):
     # Make random attendee
     if mispar_ishi_sent == None:
         random_mispar_ishi = str(random.randrange(100000, 9999999))
@@ -20,12 +20,15 @@ async def create_get_id_attendee(mispar_ishi_sent = None, tehudat_zehut = None):
         random_tehudat_zehut = str(random.randrange(100000000, 999999999))
     else:
         random_tehudat_zehut = tehudat_zehut
-    random_name = ""
-    for i in range(random.randrange(99)):
-        random_name = random_name + random.choice(string.ascii_lowercase)
-    random_name = random_name + " "
-    for i in range(random.randrange(99)):
-        random_name = random_name + random.choice(string.ascii_lowercase)
+    if full_name_sent == None:
+        random_name = ""
+        for i in range(random.randrange(99)):
+            random_name = random_name + random.choice(string.ascii_lowercase)
+        random_name = random_name + " "
+        for i in range(random.randrange(99)):
+            random_name = random_name + random.choice(string.ascii_lowercase)
+    else:
+        random_name = full_name_sent
     valid_attendee = {"attendees":[{"mispar_ishi": random_mispar_ishi, "tehudat_zehut": random_tehudat_zehut, "full_name": random_name, "arrived": False}]}
     # Create attendee
     async with httpx.AsyncClient() as client:

@@ -28,7 +28,7 @@ async def db_validating(to_validate, testing = None):
                     return "error"
             #Type 2 = id in database return true if exists
             #Type 3 = id in database return attendee
-
+            
             if type_function == 2 or type_function == 3:
                 try:
                     query = attendees.select().where(attendees.c.id == to_validate.get("id"))

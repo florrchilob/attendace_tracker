@@ -18,6 +18,7 @@ import he from "date-fns/locale/he";
 const AttendeesPage = () => {
   const apiUrl = import.meta.env.VITE_BACKEND_URL + "/attendees"
   const [attendees, setAttendees] = useState([]);
+  const [attendeesAmount, setAttendeesAmount] = useState({total_amount: 0, not_arrived: 0})
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -146,7 +147,7 @@ const AttendeesPage = () => {
       }, 5000);
     };
 
-    fetchAttendees();
+    fetchAmountAttendees();
     Swal.close();
     return () => {
       eventSource.close();
@@ -154,25 +155,64 @@ const AttendeesPage = () => {
   }, []);
 
 
-  async function fetchAttendees() {
-    try {
-      const response = await fetch(`${apiUrl}/get`);
-      const data = await response.json();
-      const attendees = data["data"].map((attendee) => ({
-        ...attendee,
-        dateArrived: attendee.dateArrived
-          ? formatDate(attendee.dateArrived)
-          : null,
-      }));
-
-      setAttendees(attendees);
-    } catch (error) {
-      console.error("Error fetching attendees:", error);
-      setLoading(null);
-    } finally {
-      setLoading(false);
+  async function fetchAmountAttendees() {
+    try{
+      const response = await fetch(`${apiUrl}/get/amountarrived`)
+      const data = await response.json()
+      if (response.status == 500){
+        Swal.fire({
+          position: "center",
+          icon: "error",
+          title: "שגיאת שרת פנימית",
+          text: "נסה שוב מאוחר יותר",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: "custom-popup-505",
+            title: "custom-popup-505-title",
+          },
+        });
+      }
+      else{
+        setAttendeesAmount(data.data)
+        setLoading(false)
+      }
+    }
+    catch{
+      Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "שגיאת שרת פנימית",
+        text: "נסה שוב מאוחר יותר",
+        showConfirmButton: false,
+        timer: 2500,
+        customClass: {
+          popup: "custom-popup-505",
+          title: "custom-popup-505-title",
+        },
+      });    
     }
   }
+
+  // async function fetchAttendees() {
+  //   try {
+  //     const response = await fetch(`${apiUrl}/get`);
+  //     const data = await response.json();
+  //     const attendees = data["data"].map((attendee) => ({
+  //       ...attendee,
+  //       dateArrived: attendee.dateArrived
+  //         ? formatDate(attendee.dateArrived)
+  //         : null,
+  //     }));
+
+  //     setAttendees(attendees);
+  //   } catch (error) {
+  //     console.error("Error fetching attendees:", error);
+  //     setLoading(null);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
 
   const formatDate = (isoString) => {
     const date = new Date(isoString)
@@ -455,9 +495,9 @@ const AttendeesPage = () => {
         },
       });
     } finally {
-      if (sent === null) {
-        fetchAttendees();
-      }
+      // if (sent === null) {
+      //   fetchAttendees();
+      // }
       setAdding(false);
       setAddingManual(false);
     }
@@ -964,7 +1004,7 @@ const AttendeesPage = () => {
         {loading === false &&
           (
             <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
-              הגיעו {attendees.filter(a => a.arrived).length}/{attendees.length}
+              הגיעו {attendeesAmount.total_amount}/{attendeesAmount.not_arrived}
             </h1>
           )
         }

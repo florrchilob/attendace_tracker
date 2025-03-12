@@ -1,31 +1,26 @@
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import MetaData
 from dotenv import find_dotenv, load_dotenv
-from sqlalchemy.orm import Session
+import os
 
+load_dotenv() 
 
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_NAME = os.getenv("DB_NAME", "attendance_tracker")
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 
-user = "root"
-password = "Aa123456123456"
-# Aa123456123456
-# password
-host = "localhost"
-secret_key="AA123456123456"
-port = 3306
-database_name = "attendace_tracker"
-
-
-engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{database_name}")
+engine = create_async_engine(f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
 
 meta = MetaData()
 
 from sqlalchemy.orm import sessionmaker
 
-Session = sessionmaker()
-Session.configure(bind=engine)
-session = Session()
+Session = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
-conn = engine.connect()
 

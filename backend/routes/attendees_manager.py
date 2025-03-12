@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from typing import List
 from schemas.attendee import Attendee
 from routes.helpers import to_return, sends_validate
-from routes.db_helpers import db_validating, db_saving, db_getting, db_updating, db_close_session, db_open_session, db_deleting, db_bulk_saving
+from routes.db_helpers import db_validating, db_getting, db_updating, db_deleting, db_bulk_saving
 from models.tables import attendees
 from dotenv import find_dotenv, load_dotenv
 from datetime import datetime
@@ -56,10 +56,12 @@ def home():
     return to_return(200)
 
 @attendees_route.get("/get/amountarrived")
-def get_amount_arrived():
-    response = db_getting({"type": 4})
+async def get_amount_arrived(testing= None):
+    response = await db_getting({"type": 4})
     if response == "error":
         return to_return(500, 99)
+    if testing == "another_func":
+        return {"total_amount": response.total_amount, "not_arrived": response.not_arrived}
     return to_return(200, 0, {"total_amount": response.total_amount, "not_arrived": response.not_arrived})
 
 #Route called to sign up a new account to the system
@@ -98,7 +100,6 @@ async def createattendees(sent: dict):
     else:
         return to_return(response[0], response[1], response[2])
     
-
 #Logic behind the create function
 async def logic_create_attendees(validAttendees: list, invalid: List, testing):
     already_mispar_ishi = []
@@ -111,13 +112,13 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
     mispar_ishi_list = [attendee.mispar_ishi for attendee in validAttendees if attendee.mispar_ishi is not None]
     tehudat_zehut_list = [attendee.tehudat_zehut for attendee in validAttendees if attendee.tehudat_zehut is not None]
 
-    mispar_validation = db_validating({
+    mispar_validation = await db_validating({
         "type": 4,
         "column_name": "mispar_ishi",
         "values_list": mispar_ishi_list
     }) if mispar_ishi_list else {"existing_values": set(), "missing_values": set()}
 
-    tehudat_validation = db_validating({
+    tehudat_validation = await db_validating({
         "type": 4,
         "column_name": "tehudat_zehut",
         "values_list": tehudat_zehut_list
@@ -142,7 +143,7 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
                 attendee.date_arrived = current_time
             new_attendees_to_save.append(attendee)
     if new_attendees_to_save and testing != "Ok" and testing != "zeros":
-        result = db_bulk_saving(new_attendees_to_save, attendees, testing)
+        result = await db_bulk_saving(new_attendees_to_save, attendees, testing)
         if result == "error":
             return (500, 99)
         
@@ -175,14 +176,16 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
         }
     }
 
-    response = get_amount_arrived()
-    print(response.json())
+    response = await get_amount_arrived(testing= "another_func")
+
     if response == "error":
         return (500, 99)
     if len(added_mispar_ishi) > 0 or len(added_tehudat_zehut) > 0:      
         message = {
             "action": "create",
-            "data": response
+            "data": {
+                "amount": response
+            }
         }
         for queue in active_connections:
             try:
@@ -202,11 +205,10 @@ async def get_attendees(filter: str, value):
         return to_return(response[0], response[1])
     return to_return(validation[0], validation[1])
 
-
 async def logic_get_attendees(filter: str, value: str):
     if filter == "name":
         filter = "full_name"
-    attendees = db_getting(
+    attendees = await db_getting(
         {
             "type": 3, 
             "values": ["id", "mispar_ishi", "tehudat_zehut", "full_name", "arrived", "date_arrived"], 
@@ -240,13 +242,13 @@ async def edit_attendees(sent: dict):
     return to_return(validation[0], validation[1])
 
 async def logic_edit_attendee(attendee_to_edit, testing):
-    db_validation = db_validating({"type": 3, "id": attendee_to_edit.id})
+    db_validation = await db_validating({"type": 3, "id": attendee_to_edit.id})
     if db_validation == "error":
         return (500, 99)
     if db_validation == False:
         return (400, 101)
 
-    db_validation_unique = db_validating({"type": 1, "mispar_ishi": attendee_to_edit.mispar_ishi, "tehudat_zehut": attendee_to_edit.tehudat_zehut})
+    db_validation_unique = await db_validating({"type": 1, "mispar_ishi": attendee_to_edit.mispar_ishi, "tehudat_zehut": attendee_to_edit.tehudat_zehut})
     if db_validation_unique != True:
         if attendee_to_edit.mispar_ishi == db_validation_unique.mispar_ishi and attendee_to_edit.mispar_ishi != None:
             return (400, 3)
@@ -266,7 +268,7 @@ async def logic_edit_attendee(attendee_to_edit, testing):
     if len(changes) == 1:
         return (200, 0)
 
-    response = db_updating({
+    response = await db_updating({
         "type": 1,
         "conditionals": {"id": attendee_to_edit.id},
         "values": changes
@@ -277,9 +279,14 @@ async def logic_edit_attendee(attendee_to_edit, testing):
     if response != True:
         return (500, 9)
 
+    amount = await get_amount_arrived(testing= "another_func")
+
     message = {
         "action": "update",
-        "data": changes
+        "data": {
+            "changes": changes,
+            "amount": amount
+        }
     }
 
     for queue in active_connections:
@@ -299,7 +306,7 @@ async def delete_attendee(id: int, testing: str = None):
     return to_return(validation[0], validation[1])
 
 async def logic_delete_attendee(id: int, testing: dict):
-    db_validation = db_validating({"type": 2, "id": id})
+    db_validation = await db_validating({"type": 2, "id": id})
     if db_validation == "error":
         return (500, 99)
     if db_validation == False:
@@ -309,9 +316,15 @@ async def logic_delete_attendee(id: int, testing: dict):
         return (500, 99)
     if db_delete != True:
         return (500, 9)
+    
+    amount = await get_amount_arrived(testing= "another_func")
+
     message = {
         "action": "delete_user",
-        "data": {"id": id}
+        "data": {
+            "updated": id,
+            "amount": amount
+        }
     }
     for queue in active_connections:
         try:
@@ -337,26 +350,30 @@ async def attendee_arrived(sent: dict, testing: str = None):
     return to_return(validation[0], validation[1])
 
 async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
-    db_validation =  db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
+    db_validation = await db_validating({"type": 1, "mispar_ishi": attendee.mispar_ishi, "tehudat_zehut": attendee.tehudat_zehut})
     if db_validation == "error":
         return (500, 99)
     if db_validation == True:
         return (400, 104)
     now = datetime.now()
     formatted_date = now.strftime("%Y-%m-%dT%H:%M:%S")
-    response = db_updating({"type": 1, "table": attendees, "conditionals": {"id": db_validation.id}, "values": {"arrived": True, "date_arrived": formatted_date}})
+    response = await db_updating({"type": 1, "table": attendees, "conditionals": {"id": db_validation.id}, "values": {"arrived": True, "date_arrived": formatted_date}})
     if response == "error":
         return (500, 99)
     if response != True:
         return (500, 9)
-    response = db_getting({"type": 2, "table": attendees, "values":["full_name", "date_arrived"], "conditionals": {"id": db_validation.id}})
+    response = await db_getting({"type": 2, "table": attendees, "values":["full_name", "date_arrived"], "conditionals": {"id": db_validation.id}})
     if response == "error" or response == []:
         return (500, 99)
     row_dict = response[0]._asdict()
     row_dict["date_arrived"] = row_dict["date_arrived"].strftime("%H:%M")
+    amount =  await get_amount_arrived(testing= "another_func")
     message = {
         "action": "update",
-        "data": {"id": db_validation.id, "arrived": True, "date_arrived": formatted_date}
+        "data": {
+            "updated" : {"id": db_validation.id, "arrived": True, "date_arrived": formatted_date},
+            "amount": amount
+        }
     }
     for queue in active_connections:
         try:
@@ -367,12 +384,13 @@ async def logic_attendee_arrived(attendee: Attendee, testing: str = None):
 
 @attendees_route.put("/restart")
 async def restart_attendace():
-    response = db_updating({"type": 2})
+    response = await db_updating({"type": 2})
     if response == "error":
         return to_return(500, 99)
+    amount = await get_amount_arrived(testing= "another_func")
     message = {
-    "action": "restart_all",
-    "data": {}
+        "action": "restart_all",
+        "data": { "amount": amount }
     }
     for queue in active_connections:
         try:
@@ -384,12 +402,15 @@ async def restart_attendace():
 
 @attendees_route.delete("/deleteall")
 async def delete_all_attendees():
-    response = db_deleting({"type": 1, "table": attendees})
+    response = await db_deleting({"type": 1, "table": attendees})
     if response == "error":
         return to_return(500, 99)
+    amount = await get_amount_arrived(testing="another_func")
     message = {
         "action": "delete_all",
-        "data": {}
+        "data": {
+            "amount": amount
+        }
     }
     for queue in active_connections:
         try:

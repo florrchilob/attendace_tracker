@@ -311,7 +311,7 @@ async def logic_delete_attendee(id: int, testing: dict):
         return (500, 99)
     if db_validation == False:
         return (400, 102)
-    db_delete = db_deleting({"type": 2, "id": id, "table": attendees})
+    db_delete = await db_deleting({"type": 2, "id": id, "table": attendees})
     if db_delete == "error":
         return (500, 99)
     if db_delete != True:

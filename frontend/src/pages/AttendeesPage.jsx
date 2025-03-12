@@ -703,11 +703,28 @@ const AttendeesPage = () => {
     }
   }, [filteredAttendees]);
 
-  const MySwal = withReactContent(Swal);
 
-  const handleFilterChange = (e) => {
-    setFilter((prev) => ({ ...prev, value: e.target.value.toLowerCase() }));
-  };
+  async function handleFilterChange(e) {
+    const newValue = e.target.value.toLowerCase()
+    setFilter((prev) => ({ ...prev, value: newValue }));
+    if (newValue.length >= 4){
+      try{
+        const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
+          method: "PUT",
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(changes),
+        });
+        const data = response.json()
+        console.log(data)
+      }
+      catch{
+        console.log("error")
+      }
+    }
+  }
 
   const handleFilterFieldChange = (e) => {
     const newField = e.target.value;
@@ -724,6 +741,7 @@ const AttendeesPage = () => {
         value: shouldRetainValue ? prev.value : "",
       };
     });
+
   };
 
   const handleSort = (field) => {
@@ -1101,7 +1119,7 @@ const AttendeesPage = () => {
               value={filter.field}
               className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
             >
-              <option value="">חפש לפי</option>
+              <option value="">סנן  לפי</option>
               <option value="mispar_ishi">מספר אישי</option>
               <option value="tehudat_zehut">תעודת זהות</option>
               <option value="full_name">שם</option>
@@ -1180,7 +1198,24 @@ const AttendeesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {
+              {attendees.length == 0 ? 
+              (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    <div className="flex items-center justify-center min-h-32 my-10">
+                      <div className="bg-turquiseConvined shadow-lg rounded-2xl p-6 text-center max-w-md relative">
+                        <p className="text-2xl mt-8 font-semibold text-gray-800">
+                          אנא סנן את המשתתף שתרצה לבדוק לפי לפחות 4 תווים
+                        </p>
+                        <p className="text-2xl absolute top-4 animate-bounce right-2 bg-pinkConvined font-semibold text-gray-800">
+                          🡡🡡🡡🡡🡡
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+              ) : (
                 addingManual &&
                 <tr
                   className="transition-all duration-400 border-b h-14 border-gray-600"
@@ -1321,7 +1356,8 @@ const AttendeesPage = () => {
                     </button>
                   </td>
                 </tr>
-              }
+              )
+            }
               {filteredAttendees.map((attendee, index) => (
                 (editingId !== attendee.id ?
                   (

@@ -40,6 +40,7 @@ const AttendeesPage = () => {
     arrived: false,
     date_arrived: ""
   })
+  const [filteredAttendees, setFilteredAttendees] = useState(attendees)
 
   const placeholderMap = {
     mispar_ishi: "הקלד מספר אישי",
@@ -661,35 +662,37 @@ const AttendeesPage = () => {
 
   registerLocale("he", he);
 
-  const filteredAttendees = 
-    attendees.filter((attendee) => {
-      if (!filter.field || !filter.value) return true;
-
-      if (filter.field === "arrived") {
-        const arrivedValue = filter.value === "כן" ? true : filter.value === "לא" ? false : null;
-        return attendee.arrived === arrivedValue;
-      }
-
-      const value = attendee[filter.field]?.toString().toLowerCase();
-      return value && value.includes(filter.value);
-    })
-    .sort((a, b) => {
-      if (!sort.field) return 0;
-      const aValue = a[sort.field]?.toString().toLowerCase() || "";
-      const bValue = b[sort.field]?.toString().toLowerCase() || "";
-
-      if (sort.direction === "asc") {
-        return aValue.localeCompare(bValue);
-      } else {
-        return bValue.localeCompare(aValue);
-      }
-    });
-
+  const getFilteredAttendees = () => {
+    if (!filter.value || filter.value.length === 4) {
+      return attendees;
+    }
+  
+    return attendees
+      .filter((attendee) => {
+        if (!filter.field || !filter.value) return true;
+  
+        if (filter.field === "arrived") {
+          const arrivedValue = filter.value === "כן" ? true : filter.value === "לא" ? false : null;
+          return attendee.arrived === arrivedValue;
+        }
+  
+        const value = attendee[filter.field]?.toString().toLowerCase();
+        return value && value.includes(filter.value);
+      })
+      .sort((a, b) => {
+        if (!sort.field) return 0;
+        const aValue = a[sort.field]?.toString().toLowerCase() || "";
+        const bValue = b[sort.field]?.toString().toLowerCase() || "";
+  
+        return sort.direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      });
+  };
+  
 
   useEffect(() => {
-    console.log("----")
-    if (filteredAttendees.length === 0 && filter.field && filter.value && filter.value.length >= 4) {
-      console.log("aca")
+    if (filteredAttendees.length === 0 && filter.field && filter.value && filter.value.length >= 5) {
       Swal.fire({
         position: "center",
         icon: "warning",
@@ -703,14 +706,19 @@ const AttendeesPage = () => {
         },
       });
     }
-    console.log(filteredAttendees.length)
   }, [filteredAttendees]);
 
 
-  async function handleFilterChange(e) {
-    const newValue = e.target.value.toLowerCase()
+  async function handleFilterChange(e = null) {
+    let newValue
+    if (e != null){
+      newValue = e.target.value.toLowerCase()
+    }
+    else{
+      newValue = filter.value
+    }
     setFilter((prev) => ({ ...prev, value: newValue }));
-    if (newValue.length >= 4){
+    if (newValue.length == 4 || e == null){
       try{
         const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
           method: "GET",
@@ -734,23 +742,41 @@ const AttendeesPage = () => {
         }
         const data = await response.json()
         if (data.error_code){
-          if (data.error_code == 104){
+          if (data.error_code == 104){      
+            Swal.fire({
+              position: "center",
+              icon: "warning",
+              title: "לא נמצאו תוצאות",
+              text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
+              showConfirmButton: false,
+              timer: 2500,
+              customClass: {
+                popup: "custom-popup-505",
+                title: "custom-popup-505-title"
+              },
+            });
             setAttendees([])
           }
         }
         else{
           setAttendees(data.data)
+          setFilteredAttendees(data.data)
         }
       }
       catch(error){
         console.log("error", error)
       }
     }
+    else{
+      setFilteredAttendees(getFilteredAttendees())
+    }
   }
 
   const handleFilterFieldChange = (e) => {
     const newField = e.target.value;
-
+    if(newField == "filter"){
+      setAttendees([])
+    }
     setFilter((prev) => {
       const shouldRetainValue =
         (prev.field === "tehudat_zehut" && newField === "mispar_ishi") ||
@@ -763,7 +789,9 @@ const AttendeesPage = () => {
         value: shouldRetainValue ? prev.value : "",
       };
     });
-
+    if(filter.value.length >= 4){
+      handleFilterChange()
+    }
   };
 
   const handleSort = (field) => {
@@ -1141,7 +1169,7 @@ const AttendeesPage = () => {
               value={filter.field}
               className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2 mx-2 text-center"
             >
-              <option value="">סנן  לפי</option>
+              <option value="filter">סנן  לפי</option>
               <option value="mispar_ishi">מספר אישי</option>
               <option value="tehudat_zehut">תעודת זהות</option>
               <option value="full_name">שם</option>
@@ -1157,6 +1185,7 @@ const AttendeesPage = () => {
               {
                 filter.field != "" &&
                 <input
+                  id="filter-input"
                   type="text"
                   value={filter.value}
                   onChange={handleFilterChange}
@@ -1169,7 +1198,10 @@ const AttendeesPage = () => {
                   }`}
               >
                 <button
-                  onClick={() => setFilter((prev) => ({ ...prev, value: "" }))}
+                  onClick={() => {
+                    setFilter((prev) => ({ ...prev, value: "" }));
+                    setAttendees([]);
+                  }}
                   className="bg-redConvinedStronger bg-opacity-55 border-transparent border-none text-white font-semibold rounded-full py-2 px-3 mr-2"
                 >
                   ✕

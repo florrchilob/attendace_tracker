@@ -3,6 +3,15 @@ export default {
   content: ["./src/**/*.{jsx,js,ts,tsx}"],
   theme: {
     extend: {
+      keyframes: {
+        bounceHorizontal: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(25px)' }
+        }
+      },
+      animation: {
+        'bounce-horizontal': 'bounceHorizontal 0.5s infinite'
+      },
       backgroundImage: {
         'bg-desktop-dark': "url('/desktop-dark.jpg')",
         'bg-desktop': "url('/desktop.jpg')",

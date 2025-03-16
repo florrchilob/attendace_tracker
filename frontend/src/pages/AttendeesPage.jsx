@@ -661,8 +661,8 @@ const AttendeesPage = () => {
 
   registerLocale("he", he);
 
-  const filteredAttendees = attendees
-    .filter((attendee) => {
+  const filteredAttendees = 
+    attendees.filter((attendee) => {
       if (!filter.field || !filter.value) return true;
 
       if (filter.field === "arrived") {
@@ -710,18 +710,39 @@ const AttendeesPage = () => {
     if (newValue.length >= 4){
       try{
         const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
-          method: "PUT",
+          method: "GET",
           headers: {
             "Access-Control-Allow-Origin": "*",
             "Content-Type": "application/json",
-          },
-          body: JSON.stringify(changes),
+          }
         });
-        const data = response.json()
-        console.log(data)
+        if (response.status == 500){
+          Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "תעודת זהות או מספר אישי כבר קיימים ברשימה.",
+            showConfirmButton: false,
+            timer: 2500,
+            customClass: {
+              popup: "custom-popup-505",
+              title: "custom-popup-505-title",
+            },
+          });
+        }
+        const data = await response.json()
+        if (data.error_code){
+          if (data.error_code == 104){
+            setAttendees(-1)
+          }
+        }
+        else{
+          console.log(data)
+          setAttendees([])
+          // setAttendees(data)
+        }
       }
-      catch{
-        console.log("error")
+      catch(error){
+        console.log("error", error)
       }
     }
   }
@@ -1127,6 +1148,11 @@ const AttendeesPage = () => {
               <option value="date_arrived">תאריך הגעה</option>
             </select>
             <div className="flex items-center w-2/3 transform-all duration-700">
+              {attendees.length == 0 && filter.field == "" &&
+                <p className="text-2xl flex flex-row animate-vibrate bg-lavanderConvined font-semibold text-gray-800">
+                  ↠↠↠
+                </p>
+              }
               {
                 filter.field != "" &&
                 <input
@@ -1198,17 +1224,15 @@ const AttendeesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {attendees.length == 0 ? 
+              {attendees.length == 0 || attendees == -1 ? 
               (
                 <tr>
                   <td colSpan="6" className="text-center">
                     <div className="flex items-center justify-center min-h-32 my-10">
-                      <div className="bg-turquiseConvined shadow-lg rounded-2xl p-6 text-center max-w-md relative">
-                        <p className="text-2xl mt-8 font-semibold text-gray-800">
-                          אנא סנן את המשתתף שתרצה לבדוק לפי לפחות 4 תווים
-                        </p>
-                        <p className="text-2xl absolute top-4 animate-bounce right-2 bg-pinkConvined font-semibold text-gray-800">
-                          🡡🡡🡡🡡🡡
+                      <div className="bg-lavanderConvined shadow-lg rounded-2xl p-6 text-center max-w-md relative">
+                        <p className="text-2xl font-semibold text-gray-800">
+                          {attendees == -1 ? "אין משתתפים במערכת" : "אנא סנן את המשתתף שתרצה לבדוק לפי לפחות 4 תווים"}
+                          
                         </p>
                       </div>
                     </div>

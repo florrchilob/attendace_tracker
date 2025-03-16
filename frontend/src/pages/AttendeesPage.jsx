@@ -719,6 +719,19 @@ const AttendeesPage = () => {
     }
     setFilter((prev) => ({ ...prev, value: newValue }));
     if (newValue.length == 4 || e == null){
+      Swal.fire({
+        title: "טוען...",
+        html: "אנא המתן בזמן שהנתונים נטענים.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading()
+        },
+        customClass: {
+          popup: "custom-popup",
+          title: "custom-title-success",
+        },
+      });
+      setAttendees([])
       try{
         const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
           method: "GET",
@@ -731,7 +744,8 @@ const AttendeesPage = () => {
           Swal.fire({
             position: "center",
             icon: "error",
-            title: "תעודת זהות או מספר אישי כבר קיימים ברשימה.",
+            title: "שגיאת שרת פנימית",
+            text: "נסה שוב מאוחר יותר",
             showConfirmButton: false,
             timer: 2500,
             customClass: {
@@ -741,6 +755,7 @@ const AttendeesPage = () => {
           });
         }
         const data = await response.json()
+        Swal.close()
         if (data.error_code){
           if (data.error_code == 104){      
             Swal.fire({
@@ -789,10 +804,14 @@ const AttendeesPage = () => {
         value: shouldRetainValue ? prev.value : "",
       };
     });
+  };
+
+  useEffect(() => {
     if(filter.value.length >= 4){
       handleFilterChange()
     }
-  };
+  }, [filter.field])
+  
 
   const handleSort = (field) => {
     setSort((prev) => ({

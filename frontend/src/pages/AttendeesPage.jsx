@@ -687,7 +687,9 @@ const AttendeesPage = () => {
 
 
   useEffect(() => {
-    if (attendees.length > 0 && filteredAttendees.length === 0 && (filter.field || filter.value)) {
+    console.log("----")
+    if (filteredAttendees.length === 0 && filter.field && filter.value && filter.value.length >= 4) {
+      console.log("aca")
       Swal.fire({
         position: "center",
         icon: "warning",
@@ -701,6 +703,7 @@ const AttendeesPage = () => {
         },
       });
     }
+    console.log(filteredAttendees.length)
   }, [filteredAttendees]);
 
 
@@ -732,13 +735,11 @@ const AttendeesPage = () => {
         const data = await response.json()
         if (data.error_code){
           if (data.error_code == 104){
-            setAttendees(-1)
+            setAttendees([])
           }
         }
         else{
-          console.log(data)
-          setAttendees([])
-          // setAttendees(data)
+          setAttendees(data.data)
         }
       }
       catch(error){

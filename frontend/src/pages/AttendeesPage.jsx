@@ -356,7 +356,7 @@ const AttendeesPage = () => {
 
   const exportErrorsToExcel = (missingData, alreadyInDataBase) => {
     const workbook = XLSX.utils.book_new();
-  
+
     if (missingData.length > 0) {
       const formattedData = missingData.map((item) => ({
         "מספר אישי": item.attendee.mispar_ishi || "",
@@ -366,29 +366,29 @@ const AttendeesPage = () => {
         "תאריך הגעה": item.attendee.date_arrived || "",
         "שגיאה": item.error.message,
       }));
-  
+
       const worksheetErrors = XLSX.utils.json_to_sheet(formattedData);
       XLSX.utils.book_append_sheet(workbook, worksheetErrors, "שגיאות");
     }
-  
+
     if (alreadyInDataBase.mispar_ishi.length > 0 || alreadyInDataBase.tehudat_zehut.length > 0) {
       const worksheetExisting = XLSX.utils.aoa_to_sheet([]);
-    
+
       if (alreadyInDataBase.mispar_ishi.length > 0) {
         const misparIshiData = [["מספרים אישיים כבר במערכת"]];
         alreadyInDataBase.mispar_ishi.forEach(num => misparIshiData.push([num]));
         XLSX.utils.sheet_add_aoa(worksheetExisting, misparIshiData, { origin: "A1" });
       }
-    
+
       if (alreadyInDataBase.tehudat_zehut.length > 0) {
         const tehudatZehutData = [["תעודות זהות כבר במערכת"]];
         alreadyInDataBase.tehudat_zehut.forEach(num => tehudatZehutData.push([num]));
         XLSX.utils.sheet_add_aoa(worksheetExisting, tehudatZehutData, { origin: "C1" });
       }
-    
+
       XLSX.utils.book_append_sheet(workbook, worksheetExisting, "משתמשים שכבר קיימים במערכת");
     }
-    
+
 
     const now = new Date();
     const formattedDate = now.toISOString().slice(0, 10);
@@ -396,8 +396,8 @@ const AttendeesPage = () => {
     const fileName = `data_errors_${formattedDate}_${formattedTime}.xlsx`;
     XLSX.writeFile(workbook, fileName, { bookType: "xlsx", type: "array" });
   };
-  
-  
+
+
 
   const excelToJSON = (event) => {
     const data = new Uint8Array(event.target.result);
@@ -442,12 +442,12 @@ const AttendeesPage = () => {
                 const date = dateParts[0].split("/").reverse().join("-");
                 const time = dateParts[1];
                 newRow[mappedKey] = `${date} ${time}:00`;
-
               } else {
                 newRow[mappedKey] = value;
               }
 
-            } else {
+            } 
+            else {
               newRow[mappedKey] = value;
             }
           }
@@ -592,7 +592,6 @@ const AttendeesPage = () => {
     }
   };
 
-
   function exportToExcel() {
     if (!attendees || attendees.length === 0) {
       Swal.fire({
@@ -732,13 +731,20 @@ const AttendeesPage = () => {
         });
         setAttendees([])
         try {
-          const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
+          let valueToSend = newValue
+          if (filter.field === "full_name") {
+            if (newValue.endsWith(" ")) {
+              valueToSend = newValue + "\u00A0"
+            }
+          }
+          const response = await fetch(`${apiUrl}/getby/${filter.field}/${valueToSend}`, {
             method: "GET",
             headers: {
               "Access-Control-Allow-Origin": "*",
               "Content-Type": "application/json",
             }
           });
+          newValue
           if (response.status == 500) {
             Swal.fire({
               position: "center",
@@ -1091,7 +1097,7 @@ const AttendeesPage = () => {
         {loading === false &&
           (
             <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
-              הגיעו {attendeesAmount.total_amount}/{attendeesAmount.total_amount-attendeesAmount.not_arrived}
+              הגיעו {attendeesAmount.total_amount}/{attendeesAmount.total_amount - attendeesAmount.not_arrived}
             </h1>
           )
         }

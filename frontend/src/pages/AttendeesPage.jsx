@@ -73,20 +73,40 @@ const AttendeesPage = () => {
       console.log("Message received: ", event.data);
     };
 
-    eventSource.addEventListener("create", (event) => {
+    eventSource.addEventListener("create", async (event) => {
       const data = JSON.parse(event.data);
-      console.log("Create received (raw):", data);
-      const formattedAttendees = data.attendees.map((attendee) => ({
-        ...attendee,
-        dateArrived: attendee.dateArrived
-          ? formatDate(attendee.dateArrived)
-          : null,
-      }));
-
-      console.log("Create received (formatted):", formattedAttendees);
-
-      setAttendees((prev) => [...prev, ...formattedAttendees]);
+      console.log("Create received:", data);
+    
+      if (data.amount) {
+        setAttendeesAmount(data.amount);
+      }
+    
+      setAttendees(prevAttendees => {
+        if (prevAttendees.length > 0) {
+          Swal.fire({
+            position: "center",
+            icon: "info",
+            title: "מנהל אחר הוסיף משתמשים ולכן נעדכן את החיפוש שלך כך שהוא מעודכן",
+            showConfirmButton: false,allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          });
+          setFilter(prevFilter =>{
+            handleFilterChange(null, prevFilter.field, prevFilter.value);
+            return prevFilter
+          }
+          )
+        }
+        
+        return prevAttendees; 
+      });
     });
+    
 
     eventSource.addEventListener("update", (event) => {
       const updatedAttendee = JSON.parse(event.data);
@@ -706,42 +726,48 @@ const AttendeesPage = () => {
   }, [filteredAttendees]);
 
 
-  async function handleFilterChange(e = null) {
-    let newValue
+  async function handleFilterChange(e = null, fieldOverride = null, valueOverride = null) {
+    let newValue;
     if (e != null) {
-      newValue = e.target.value.toLowerCase()
+      newValue = e.target.value.toLowerCase();
+    } else {
+      newValue = valueOverride || filter.value;
     }
-    else {
-      newValue = filter.value
-    }
+    
+    const currentField = fieldOverride || filter.field;
+    
     setFilter((prev) => ({ ...prev, value: newValue }));
+    
     if(newValue.length < 4){
-      setAttendees([])
-      setFilteredAttendees([])
+      setAttendees([]);
+      setFilteredAttendees([]);
     }
+    
     if (newValue.length >= 4) {
       if (newValue.length == 4 || e == null) {
-        Swal.fire({
-          title: "טוען...",
-          html: "אנא המתן בזמן שהנתונים נטענים.",
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading()
-          },
-          customClass: {
-            popup: "custom-popup",
-            title: "custom-title-success",
-          },
-        });
-        setAttendees([])
+        if (!Swal.isVisible()) {
+          Swal.fire({
+            title: "טוען...",
+            html: "אנא המתן בזמן שהנתונים נטענים.",
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+            customClass: {
+              popup: "custom-popup",
+              title: "custom-title-success",
+            },
+          });
+        }
+        setAttendees([]);
         try {
-          let valueToSend = newValue
-          if (filter.field === "full_name") {
+          let valueToSend = newValue;
+          if (currentField === "full_name") {
             if (newValue.endsWith(" ")) {
-              valueToSend = newValue + "\u00A0"
+              valueToSend = newValue + "\u00A0";
             }
           }
-          const response = await fetch(`${apiUrl}/getby/${filter.field}/${valueToSend}`, {
+          const response = await fetch(`${apiUrl}/getby/${currentField}/${valueToSend}`, {
             method: "GET",
             headers: {
               "Access-Control-Allow-Origin": "*",
@@ -762,8 +788,15 @@ const AttendeesPage = () => {
               },
             });
           }
-          const data = await response.json()
-          Swal.close()
+          const data = await response.json();
+          if (fieldOverride == null) {
+            Swal.close();
+          }
+          else{
+            setTimeout(() => {
+              Swal.close();
+            }, 3500);
+          }
           if (data.error_code) {
             if (data.error_code == 104) {
               Swal.fire({
@@ -778,21 +811,18 @@ const AttendeesPage = () => {
                   title: "custom-popup-505-title"
                 },
               });
-              setAttendees([])
-              setFilteredAttendees([])
+              setAttendees([]);
+              setFilteredAttendees([]);
             }
+          } else {
+            setAttendees(data.data);
+            setFilteredAttendees(data.data);
           }
-          else {
-            setAttendees(data.data)
-            setFilteredAttendees(data.data)
-          }
+        } catch (error) {
+          console.log("error", error);
         }
-        catch (error) {
-          console.log("error", error)
-        }
-      }
-      else {
-        setFilteredAttendees(getFilteredAttendees(newValue))
+      } else {
+        setFilteredAttendees(getFilteredAttendees(newValue));
       }
     }
   }

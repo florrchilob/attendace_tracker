@@ -506,7 +506,6 @@ const AttendeesPage = () => {
 
   const sendDataToAPI = async (data) => {
     try {
-      console.log("started sending")
       const response = await fetch(`${apiUrl}/create`, {
         method: "POST",
         headers: {
@@ -518,7 +517,6 @@ const AttendeesPage = () => {
       if (response.status == 500) {
         throw new Error(`Server error: ${response.status}`);
       }
-      console.log("end sending")
       let dataResponse = await response.json()
       handleAPIResponse(dataResponse);
     } catch (error) {
@@ -662,22 +660,18 @@ const AttendeesPage = () => {
 
   registerLocale("he", he);
 
-  const getFilteredAttendees = () => {
-    if (!filter.value || filter.value.length === 4) {
+  const getFilteredAttendees = (newValue = null) => {
+    if (newValue == null){
+      newValue = filter.value
+    }
+    if (!newValue || newValue.length === 4) {
       return attendees;
     }
-  
     return attendees
       .filter((attendee) => {
-        if (!filter.field || !filter.value) return true;
-  
-        if (filter.field === "arrived") {
-          const arrivedValue = filter.value === "כן" ? true : filter.value === "לא" ? false : null;
-          return attendee.arrived === arrivedValue;
-        }
-  
+        if (!filter.field || !newValue) return true;
         const value = attendee[filter.field]?.toString().toLowerCase();
-        return value && value.includes(filter.value);
+        return value && value.includes(newValue);
       })
       .sort((a, b) => {
         if (!sort.field) return 0;
@@ -718,72 +712,75 @@ const AttendeesPage = () => {
       newValue = filter.value
     }
     setFilter((prev) => ({ ...prev, value: newValue }));
-    if (newValue.length == 4 || e == null){
-      Swal.fire({
-        title: "טוען...",
-        html: "אנא המתן בזמן שהנתונים נטענים.",
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading()
-        },
-        customClass: {
-          popup: "custom-popup",
-          title: "custom-title-success",
-        },
-      });
-      setAttendees([])
-      try{
-        const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
-          method: "GET",
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Content-Type": "application/json",
-          }
+    if (newValue.length >= 4 ){
+      if (newValue.length == 4 || e == null){
+        Swal.fire({
+          title: "טוען...",
+          html: "אנא המתן בזמן שהנתונים נטענים.",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading()
+          },
+          customClass: {
+            popup: "custom-popup",
+            title: "custom-title-success",
+          },
         });
-        if (response.status == 500){
-          Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "שגיאת שרת פנימית",
-            text: "נסה שוב מאוחר יותר",
-            showConfirmButton: false,
-            timer: 2500,
-            customClass: {
-              popup: "custom-popup-505",
-              title: "custom-popup-505-title",
-            },
+        setAttendees([])
+        try{
+          const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
+            method: "GET",
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Content-Type": "application/json",
+            }
           });
-        }
-        const data = await response.json()
-        Swal.close()
-        if (data.error_code){
-          if (data.error_code == 104){      
+          if (response.status == 500){
             Swal.fire({
               position: "center",
-              icon: "warning",
-              title: "לא נמצאו תוצאות",
-              text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
+              icon: "error",
+              title: "שגיאת שרת פנימית",
+              text: "נסה שוב מאוחר יותר",
               showConfirmButton: false,
               timer: 2500,
               customClass: {
                 popup: "custom-popup-505",
-                title: "custom-popup-505-title"
+                title: "custom-popup-505-title",
               },
             });
-            setAttendees([])
+          }
+          const data = await response.json()
+          Swal.close()
+          if (data.error_code){
+            if (data.error_code == 104){      
+              Swal.fire({
+                position: "center",
+                icon: "warning",
+                title: "לא נמצאו תוצאות",
+                text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
+                showConfirmButton: false,
+                timer: 2500,
+                customClass: {
+                  popup: "custom-popup-505",
+                  title: "custom-popup-505-title"
+                },
+              });
+              setAttendees([])
+              setFilteredAttendees([])
+            }
+          }
+          else{
+            setAttendees(data.data)
+            setFilteredAttendees(data.data)
           }
         }
-        else{
-          setAttendees(data.data)
-          setFilteredAttendees(data.data)
+        catch(error){
+          console.log("error", error)
         }
       }
-      catch(error){
-        console.log("error", error)
+      else{
+        setFilteredAttendees(getFilteredAttendees(newValue))
       }
-    }
-    else{
-      setFilteredAttendees(getFilteredAttendees())
     }
   }
 
@@ -810,8 +807,7 @@ const AttendeesPage = () => {
     if(filter.value.length >= 4){
       handleFilterChange()
     }
-  }, [filter.field])
-  
+  }, [filter.field])  
 
   const handleSort = (field) => {
     setSort((prev) => ({
@@ -1192,8 +1188,6 @@ const AttendeesPage = () => {
               <option value="mispar_ishi">מספר אישי</option>
               <option value="tehudat_zehut">תעודת זהות</option>
               <option value="full_name">שם</option>
-              <option value="arrived">נוכחות</option>
-              <option value="date_arrived">תאריך הגעה</option>
             </select>
             <div className="flex items-center w-2/3 transform-all duration-700">
               {attendees.length == 0 && filter.field == "" &&

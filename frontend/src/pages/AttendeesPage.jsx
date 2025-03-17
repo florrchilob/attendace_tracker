@@ -111,13 +111,6 @@ const AttendeesPage = () => {
     eventSource.addEventListener("update", (event) => {
       const updatedAttendee = JSON.parse(event.data);
       console.log("Update received:", updatedAttendee);
-      setAttendees((prev) =>
-        prev.map((attendee) =>
-          attendee.id === updatedAttendee.id
-            ? { ...attendee, ...updatedAttendee }
-            : attendee
-        )
-      );
     });
 
     eventSource.addEventListener("delete_user", (event) => {
@@ -698,6 +691,7 @@ const AttendeesPage = () => {
       })
       .sort((a, b) => {
         if (!sort.field) return 0;
+        console.log(sort)
         const aValue = a[sort.field]?.toString().toLowerCase() || "";
         const bValue = b[sort.field]?.toString().toLowerCase() || "";
 

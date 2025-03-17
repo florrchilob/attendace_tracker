@@ -198,6 +198,7 @@ async def logic_create_attendees(validAttendees: list, invalid: List, testing):
 @attendees_route.get("/getby/{filter}/{value}")
 async def get_attendees(filter: str, value):
     validation = sends_validate({"filter": filter, "value": value}, ["filter", "value"])
+    print(validation)
     if validation == True:
         response = await logic_get_attendees(filter, value)
         if len(response) == 3:

@@ -18,7 +18,7 @@ import he from "date-fns/locale/he";
 const AttendeesPage = () => {
   const apiUrl = import.meta.env.VITE_BACKEND_URL + "/attendees"
   const [attendees, setAttendees] = useState([]);
-  const [attendeesAmount, setAttendeesAmount] = useState({total_amount: 0, not_arrived: 0})
+  const [attendeesAmount, setAttendeesAmount] = useState({ total_amount: 0, not_arrived: 0 })
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -157,10 +157,10 @@ const AttendeesPage = () => {
 
 
   async function fetchAmountAttendees() {
-    try{
+    try {
       const response = await fetch(`${apiUrl}/get/amountarrived`)
       const data = await response.json()
-      if (response.status == 500){
+      if (response.status == 500) {
         Swal.fire({
           position: "center",
           icon: "error",
@@ -174,12 +174,12 @@ const AttendeesPage = () => {
           },
         });
       }
-      else{
+      else {
         setAttendeesAmount(data.data)
         setLoading(false)
       }
     }
-    catch{
+    catch {
       Swal.fire({
         position: "center",
         icon: "error",
@@ -191,29 +191,9 @@ const AttendeesPage = () => {
           popup: "custom-popup-505",
           title: "custom-popup-505-title",
         },
-      });    
+      });
     }
   }
-
-  // async function fetchAttendees() {
-  //   try {
-  //     const response = await fetch(`${apiUrl}/get`);
-  //     const data = await response.json();
-  //     const attendees = data["data"].map((attendee) => ({
-  //       ...attendee,
-  //       dateArrived: attendee.dateArrived
-  //         ? formatDate(attendee.dateArrived)
-  //         : null,
-  //     }));
-
-  //     setAttendees(attendees);
-  //   } catch (error) {
-  //     console.error("Error fetching attendees:", error);
-  //     setLoading(null);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
 
   const formatDate = (isoString) => {
     const date = new Date(isoString)
@@ -374,22 +354,50 @@ const AttendeesPage = () => {
     });
   };
 
-  const exportErrorsToExcel = (missingData) => {
-    const formattedData = missingData.map((item) => ({
-      "מספר אישי": item.attendee.mispar_ishi || "",
-      "תעודת זהות": item.attendee.tehudat_zehut || "",
-      "שם": item.attendee.full_name || "",
-      "נוכחות": item.attendee.arrived === true ? "כן" : item.attendee.arrived === false ? "לא" : "",
-      "תאריך הגעה": item.attendee.date_arrived || "",
-      "שגיאה": item.error.message,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const exportErrorsToExcel = (missingData, alreadyInDataBase) => {
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "שגיאות");
+  
+    if (missingData.length > 0) {
+      const formattedData = missingData.map((item) => ({
+        "מספר אישי": item.attendee.mispar_ishi || "",
+        "תעודת זהות": item.attendee.tehudat_zehut || "",
+        "שם": item.attendee.full_name || "",
+        "נוכחות": item.attendee.arrived === true ? "כן" : item.attendee.arrived === false ? "לא" : "",
+        "תאריך הגעה": item.attendee.date_arrived || "",
+        "שגיאה": item.error.message,
+      }));
+  
+      const worksheetErrors = XLSX.utils.json_to_sheet(formattedData);
+      XLSX.utils.book_append_sheet(workbook, worksheetErrors, "שגיאות");
+    }
+  
+    if (alreadyInDataBase.mispar_ishi.length > 0 || alreadyInDataBase.tehudat_zehut.length > 0) {
+      const worksheetExisting = XLSX.utils.aoa_to_sheet([]);
+    
+      if (alreadyInDataBase.mispar_ishi.length > 0) {
+        const misparIshiData = [["מספרים אישיים כבר במערכת"]];
+        alreadyInDataBase.mispar_ishi.forEach(num => misparIshiData.push([num]));
+        XLSX.utils.sheet_add_aoa(worksheetExisting, misparIshiData, { origin: "A1" });
+      }
+    
+      if (alreadyInDataBase.tehudat_zehut.length > 0) {
+        const tehudatZehutData = [["תעודות זהות כבר במערכת"]];
+        alreadyInDataBase.tehudat_zehut.forEach(num => tehudatZehutData.push([num]));
+        XLSX.utils.sheet_add_aoa(worksheetExisting, tehudatZehutData, { origin: "C1" });
+      }
+    
+      XLSX.utils.book_append_sheet(workbook, worksheetExisting, "משתמשים שכבר קיימים במערכת");
+    }
+    
 
-    XLSX.writeFile(workbook, "missing_data_errors.xlsx", { bookType: "xlsx", type: "binary" });
+    const now = new Date();
+    const formattedDate = now.toISOString().slice(0, 10);
+    const formattedTime = now.toTimeString().slice(0, 5).replace(":", "-");
+    const fileName = `data_errors_${formattedDate}_${formattedTime}.xlsx`;
+    XLSX.writeFile(workbook, fileName, { bookType: "xlsx", type: "array" });
   };
+  
+  
 
   const excelToJSON = (event) => {
     const data = new Uint8Array(event.target.result);
@@ -496,9 +504,6 @@ const AttendeesPage = () => {
         },
       });
     } finally {
-      // if (sent === null) {
-      //   fetchAttendees();
-      // }
       setAdding(false);
       setAddingManual(false);
     }
@@ -538,6 +543,7 @@ const AttendeesPage = () => {
 
   const handleAPIResponse = (dataResponse) => {
     const missingData = dataResponse?.data?.missing_data || [];
+    const alreadyInDataBase = dataResponse?.data?.already_database || [];
     if (dataResponse.error_code) {
       if (dataResponse.error_code == 101) {
         Swal.fire({
@@ -552,7 +558,7 @@ const AttendeesPage = () => {
             title: "custom-popup-505-title",
           },
         });
-        exportErrorsToExcel(missingData);
+        exportErrorsToExcel(missingData, alreadyInDataBase);
       }
     }
     else {
@@ -569,7 +575,7 @@ const AttendeesPage = () => {
             title: "custom-popup-505-title",
           },
         });
-        exportErrorsToExcel(missingData);
+        exportErrorsToExcel(missingData, alreadyInDataBase);
       } else {
         Swal.fire({
           position: "center",
@@ -652,8 +658,6 @@ const AttendeesPage = () => {
         }
       } catch (error) {
         setLoading(null)
-      } finally {
-        fetchAttendees();
       }
     })
   }
@@ -661,7 +665,7 @@ const AttendeesPage = () => {
   registerLocale("he", he);
 
   const getFilteredAttendees = (newValue = null) => {
-    if (newValue == null){
+    if (newValue == null) {
       newValue = filter.value
     }
     if (!newValue || newValue.length === 4) {
@@ -677,13 +681,13 @@ const AttendeesPage = () => {
         if (!sort.field) return 0;
         const aValue = a[sort.field]?.toString().toLowerCase() || "";
         const bValue = b[sort.field]?.toString().toLowerCase() || "";
-  
+
         return sort.direction === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       });
   };
-  
+
 
   useEffect(() => {
     if (filteredAttendees.length === 0 && filter.field && filter.value && filter.value.length >= 5) {
@@ -705,15 +709,15 @@ const AttendeesPage = () => {
 
   async function handleFilterChange(e = null) {
     let newValue
-    if (e != null){
+    if (e != null) {
       newValue = e.target.value.toLowerCase()
     }
-    else{
+    else {
       newValue = filter.value
     }
     setFilter((prev) => ({ ...prev, value: newValue }));
-    if (newValue.length >= 4 ){
-      if (newValue.length == 4 || e == null){
+    if (newValue.length >= 4) {
+      if (newValue.length == 4 || e == null) {
         Swal.fire({
           title: "טוען...",
           html: "אנא המתן בזמן שהנתונים נטענים.",
@@ -727,7 +731,7 @@ const AttendeesPage = () => {
           },
         });
         setAttendees([])
-        try{
+        try {
           const response = await fetch(`${apiUrl}/getby/${filter.field}/${newValue}`, {
             method: "GET",
             headers: {
@@ -735,7 +739,7 @@ const AttendeesPage = () => {
               "Content-Type": "application/json",
             }
           });
-          if (response.status == 500){
+          if (response.status == 500) {
             Swal.fire({
               position: "center",
               icon: "error",
@@ -751,8 +755,8 @@ const AttendeesPage = () => {
           }
           const data = await response.json()
           Swal.close()
-          if (data.error_code){
-            if (data.error_code == 104){      
+          if (data.error_code) {
+            if (data.error_code == 104) {
               Swal.fire({
                 position: "center",
                 icon: "warning",
@@ -769,16 +773,16 @@ const AttendeesPage = () => {
               setFilteredAttendees([])
             }
           }
-          else{
+          else {
             setAttendees(data.data)
             setFilteredAttendees(data.data)
           }
         }
-        catch(error){
+        catch (error) {
           console.log("error", error)
         }
       }
-      else{
+      else {
         setFilteredAttendees(getFilteredAttendees(newValue))
       }
     }
@@ -786,7 +790,7 @@ const AttendeesPage = () => {
 
   const handleFilterFieldChange = (e) => {
     const newField = e.target.value;
-    if(newField == "filter"){
+    if (newField == "filter") {
       setAttendees([])
     }
     setFilter((prev) => {
@@ -804,10 +808,10 @@ const AttendeesPage = () => {
   };
 
   useEffect(() => {
-    if(filter.value.length >= 4){
+    if (filter.value.length >= 4) {
       handleFilterChange()
     }
-  }, [filter.field])  
+  }, [filter.field])
 
   const handleSort = (field) => {
     setSort((prev) => ({
@@ -1087,7 +1091,7 @@ const AttendeesPage = () => {
         {loading === false &&
           (
             <h1 className="absolute bg-greenConvined my-6 mx-auto px-2 text-black rounded-xl pb-4 bg-opacity-80 justify-center text-center top-0 text-6xl font-bold ml-4  flex flex-col">
-              הגיעו {attendeesAmount.total_amount}/{attendeesAmount.not_arrived}
+              הגיעו {attendeesAmount.total_amount}/{attendeesAmount.total_amount-attendeesAmount.not_arrived}
             </h1>
           )
         }
@@ -1214,6 +1218,7 @@ const AttendeesPage = () => {
                   onClick={() => {
                     setFilter((prev) => ({ ...prev, value: "" }));
                     setAttendees([]);
+                    setFilteredAttendees([])
                   }}
                   className="bg-redConvinedStronger bg-opacity-55 border-transparent border-none text-white font-semibold rounded-full py-2 px-3 mr-2"
                 >
@@ -1270,23 +1275,7 @@ const AttendeesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {attendees.length == 0 || attendees == -1 ? 
-              (
-                <tr>
-                  <td colSpan="6" className="text-center">
-                    <div className="flex items-center justify-center min-h-32 my-10">
-                      <div className="bg-lavanderConvined shadow-lg rounded-2xl p-6 text-center max-w-md relative">
-                        <p className="text-2xl font-semibold text-gray-800">
-                          {attendees == -1 ? "אין משתתפים במערכת" : "אנא סנן את המשתתף שתרצה לבדוק לפי לפחות 4 תווים"}
-                          
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-
-              ) : (
-                addingManual &&
+              {addingManual &&
                 <tr
                   className="transition-all duration-400 border-b h-14 border-gray-600"
                 >
@@ -1426,8 +1415,20 @@ const AttendeesPage = () => {
                     </button>
                   </td>
                 </tr>
-              )
-            }
+              }
+              {attendees.length == 0 &&
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    <div className="flex items-center justify-center min-h-32 my-10">
+                      <div className="bg-lavanderConvined shadow-lg rounded-2xl p-6 text-center max-w-md relative">
+                        <p className="text-2xl font-semibold text-gray-800">
+                          אנא סנן את המשתתף שתרצה לבדוק לפי לפחות 4 תווים
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
               {filteredAttendees.map((attendee, index) => (
                 (editingId !== attendee.id ?
                   (

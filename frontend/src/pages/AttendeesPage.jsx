@@ -715,6 +715,10 @@ const AttendeesPage = () => {
       newValue = filter.value
     }
     setFilter((prev) => ({ ...prev, value: newValue }));
+    if(newValue.length < 4){
+      setAttendees([])
+      setFilteredAttendees([])
+    }
     if (newValue.length >= 4) {
       if (newValue.length == 4 || e == null) {
         Swal.fire({
@@ -744,7 +748,6 @@ const AttendeesPage = () => {
               "Content-Type": "application/json",
             }
           });
-          newValue
           if (response.status == 500) {
             Swal.fire({
               position: "center",

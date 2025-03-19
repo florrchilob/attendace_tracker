@@ -282,9 +282,7 @@ async def logic_edit_attendee(attendee_to_edit, testing):
         return (500, 99)
     if response != True:
         return (500, 9)
-
     amount = await get_amount_arrived(testing= "another_func")
-
     message = {
         "action": "update",
         "data": {

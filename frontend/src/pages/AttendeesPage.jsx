@@ -109,8 +109,36 @@ const AttendeesPage = () => {
 
 
     eventSource.addEventListener("update", (event) => {
-      const updatedAttendee = JSON.parse(event.data);
-      console.log("Update received:", updatedAttendee);
+      const data = JSON.parse(event.data);
+      if (data.amount) {
+        setAttendeesAmount(data.amount);
+      }
+      const indexAttendeeFound = attendees.findIndex(attendee => attendee.id == data.changes.id)
+      if (indexAttendeeFound != -1){
+        setAttendees(prevAttendees => {
+          if (prevAttendees.length > 0) {
+            Swal.fire({
+              position: "center",
+              icon: "info",
+              title: "מנהל אחר ערך משתמש שנמצא על המסך, אז אנחנו נעדכן את החיפוש שלו כך שיהיה מעודכן",
+              showConfirmButton: false, allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+              customClass: {
+                popup: "custom-popup",
+                title: "custom-title-success",
+              },
+            });
+            setFilter(prevFilter => {
+              handleFilterChange(null, prevFilter.field, prevFilter.value);
+              return prevFilter
+            }
+            )
+          }
+          return prevAttendees;
+        });
+      }
     });
 
     eventSource.addEventListener("delete_user", (event) => {
@@ -804,7 +832,8 @@ const AttendeesPage = () => {
                 icon: "warning",
                 title: "לא נמצאו תוצאות",
                 text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
-                showConfirmButton: false,
+                showConfirmButton: true,
+                confirmButtonText: "סגור",
                 timer: 2500,
                 customClass: {
                   popup: "custom-popup-505",

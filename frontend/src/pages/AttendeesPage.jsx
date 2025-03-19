@@ -51,7 +51,7 @@ const AttendeesPage = () => {
   };
 
   const [filter, setFilter] = useState({ field: "", value: "" });
-  const [sort, setSort] = useState({ field: "", direction: "asc" })
+  const [sort, setSort] = useState({ field: "arrived", direction: "asc" })
 
   useEffect(() => {
     Swal.fire({
@@ -76,18 +76,18 @@ const AttendeesPage = () => {
     eventSource.addEventListener("create", async (event) => {
       const data = JSON.parse(event.data);
       console.log("Create received:", data);
-    
+
       if (data.amount) {
         setAttendeesAmount(data.amount);
       }
-    
+
       setAttendees(prevAttendees => {
         if (prevAttendees.length > 0) {
           Swal.fire({
             position: "center",
             icon: "info",
             title: "מנהל אחר הוסיף משתמשים ולכן נעדכן את החיפוש שלך כך שהוא מעודכן",
-            showConfirmButton: false,allowOutsideClick: false,
+            showConfirmButton: false, allowOutsideClick: false,
             didOpen: () => {
               Swal.showLoading();
             },
@@ -96,17 +96,17 @@ const AttendeesPage = () => {
               title: "custom-title-success",
             },
           });
-          setFilter(prevFilter =>{
+          setFilter(prevFilter => {
             handleFilterChange(null, prevFilter.field, prevFilter.value);
             return prevFilter
           }
           )
         }
-        
-        return prevAttendees; 
+
+        return prevAttendees;
       });
     });
-    
+
 
     eventSource.addEventListener("update", (event) => {
       const updatedAttendee = JSON.parse(event.data);
@@ -459,7 +459,7 @@ const AttendeesPage = () => {
                 newRow[mappedKey] = value;
               }
 
-            } 
+            }
             else {
               newRow[mappedKey] = value;
             }
@@ -676,29 +676,34 @@ const AttendeesPage = () => {
 
   registerLocale("he", he);
 
-  const getFilteredAttendees = (newValue = null) => {
-    if (newValue == null) {
+  const getFilteredAttendees = (newValue = null, sortBy = null, attendeesSent = null) => {
+    if (!newValue) {
       newValue = filter.value
     }
-    if (!newValue || newValue.length === 4) {
-      return attendees;
+    if (!sortBy){
+      sortBy = sort
     }
-    return attendees
+    if (!attendeesSent){
+      attendeesSent = attendees
+    }
+    const attendeesReturn = attendeesSent
+      .sort((a, b) => {
+        if (!sortBy.field) return 0;
+        const aValue = a[sortBy.field]?.toString().toLowerCase() || "";
+        const bValue = b[sortBy.field]?.toString().toLowerCase() || "";
+        return sortBy.direction === "asc"
+          ? bValue.localeCompare(aValue)
+          : aValue.localeCompare(bValue)
+      });
+    if (!newValue || newValue.length === 4) {
+      return attendeesReturn
+    }
+    return attendeesReturn
       .filter((attendee) => {
         if (!filter.field || !newValue) return true;
         const value = attendee[filter.field]?.toString().toLowerCase();
         return value && value.includes(newValue);
       })
-      .sort((a, b) => {
-        if (!sort.field) return 0;
-        console.log(sort)
-        const aValue = a[sort.field]?.toString().toLowerCase() || "";
-        const bValue = b[sort.field]?.toString().toLowerCase() || "";
-
-        return sort.direction === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      });
   };
 
 
@@ -709,7 +714,8 @@ const AttendeesPage = () => {
         icon: "warning",
         title: "לא נמצאו תוצאות",
         text: "נסה לשנות את החיפוש או לבדוק את הנתונים.",
-        showConfirmButton: false,
+        showConfirmButton: true,
+        confirmButtonText: "סגור",
         timer: 2500,
         customClass: {
           popup: "custom-popup-505",
@@ -727,16 +733,16 @@ const AttendeesPage = () => {
     } else {
       newValue = valueOverride || filter.value;
     }
-    
+
     const currentField = fieldOverride || filter.field;
-    
+
     setFilter((prev) => ({ ...prev, value: newValue }));
-    
-    if(newValue.length < 4){
+
+    if (newValue.length < 4) {
       setAttendees([]);
       setFilteredAttendees([]);
     }
-    
+
     if (newValue.length >= 4) {
       if (newValue.length == 4 || e == null) {
         if (!Swal.isVisible()) {
@@ -786,7 +792,7 @@ const AttendeesPage = () => {
           if (fieldOverride == null) {
             Swal.close();
           }
-          else{
+          else {
             setTimeout(() => {
               Swal.close();
             }, 3500);
@@ -810,13 +816,11 @@ const AttendeesPage = () => {
             }
           } else {
             setAttendees(data.data);
-            setFilteredAttendees(data.data);
+            setFilteredAttendees(getFilteredAttendees(newValue, null, data.data));
           }
         } catch (error) {
           console.log("error", error);
         }
-      } else {
-        setFilteredAttendees(getFilteredAttendees(newValue));
       }
     }
   }
@@ -846,12 +850,31 @@ const AttendeesPage = () => {
     }
   }, [filter.field])
 
-  const handleSort = (field) => {
-    setSort((prev) => ({
-      field,
-      direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+  const handleSort = (e) => {
+    if (filteredAttendees.length > 0){   
+      if(e.target.id == "order.field"){
+        setSort ((prev) => {
+          const newSort = {...prev, field: e.target.value}
+          setAttendees(getFilteredAttendees(null, newSort))
+          return newSort
+        })
+      }
+      else{
+        setSort((prev) => {
+          const newSort = {...prev, direction: prev.direction === "asc" ? "desc" : "asc"}
+          setAttendees(getFilteredAttendees(null, newSort))
+          return newSort
+        })
+      }
+    }
+    else{
+      setSort ((prev) => ({
+        field : e.target.id == "order.field" ? e.target.value : prev.field,
+        direction: e.target.id == "order.direction" ? (prev.direction == "asc" ? "desc" : "asc") : prev.direction
+      }))
+    }
+  }
+
 
   const handleManualSubmit = async () => {
     if (!manual.full_name || manual.full_name.trim() === "") {
@@ -1111,7 +1134,6 @@ const AttendeesPage = () => {
   };
 
 
-
   return (
     <div
       dir="rtl"
@@ -1262,7 +1284,8 @@ const AttendeesPage = () => {
           </div>
           <div className="flex items-center w-1/2 justify-end">
             <select
-              onChange={(e) => handleSort(e.target.value)}
+              onChange={(e) => handleSort(e)}
+              id="order.field"
               className="transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full p-2  mx-2 text-center"
             >
               <option value="">מיין לפי</option>
@@ -1273,12 +1296,8 @@ const AttendeesPage = () => {
               <option value="date_arrived">תאריך הגעה</option>
             </select>
             <button
-              onClick={() =>
-                setSort((prev) => ({
-                  ...prev,
-                  direction: prev.direction === "asc" ? "desc" : "asc",
-                }))
-              }
+              onClick={(e) => handleSort(e)}
+              id="order.direction"
               className="border-none hover:border-none text-sm transition-all duration-400 bg-gray-700 bg-opacity-70 text-white font-semibold rounded-full text-center h-16 w-16 flex flex-col justify-center items-center"
             >
               {sort.direction === "asc" ? (
